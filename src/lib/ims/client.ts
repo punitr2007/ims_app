@@ -39,20 +39,47 @@ export class ImsClient {
 
   constructor(existingJar?: CookieJar) {
     this.jar = existingJar || new CookieJar();
-    this.client = wrapper(
-      axios.create({
-        jar: this.jar,
-        withCredentials: true,
-        timeout: 12000,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Connection': 'keep-alive',
-        },
-      })
-    );
+    const instance = axios.create({
+      timeout: 15000,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Connection': 'keep-alive',
+      },
+    });
+
+    instance.interceptors.request.use(async (config) => {
+      const fullUrl = config.url?.startsWith('http')
+        ? config.url
+        : new URL(config.url || '', BASE_URL).toString();
+      const cookieHeader = await this.jar.getCookieString(fullUrl);
+      if (cookieHeader) {
+        config.headers.set('Cookie', cookieHeader);
+      }
+      return config;
+    });
+
+    instance.interceptors.response.use(async (response) => {
+      const setCookie = response.headers['set-cookie'];
+      if (setCookie) {
+        const fullUrl = response.config.url?.startsWith('http')
+          ? response.config.url
+          : new URL(response.config.url || '', BASE_URL).toString();
+        const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
+        for (const cStr of cookieArray) {
+          try {
+            await this.jar.setCookie(cStr, fullUrl);
+          } catch {
+            // ignore malformed cookies
+          }
+        }
+      }
+      return response;
+    });
+
+    this.client = instance;
   }
 
   /**
@@ -174,27 +201,37 @@ export class ImsClient {
     // Check for login errors
     const alertMatch = html.match(/alert\(['"]([^'"]+)['"]\)/i);
     const alertText = alertMatch ? alertMatch[1] : '';
+    const htmlLower = html.toLowerCase();
+    const alertLower = alertText.toLowerCase();
 
     if (
-      html.includes('Invalid Security Number') ||
-      html.includes('Please Enter Captcha') ||
-      alertText.toLowerCase().includes('security') ||
-      alertText.toLowerCase().includes('captcha')
+      htmlLower.includes('invalid security number') ||
+      htmlLower.includes('please enter captcha') ||
+      alertLower.includes('security') ||
+      alertLower.includes('captcha')
     ) {
       return { success: false, error: 'Wrong CAPTCHA. Please try again.', status: 'WRONG_CAPTCHA' };
     }
 
     if (
-      html.includes('Invalid password') ||
-      html.includes('Your password does not match') ||
-      html.includes('Invalid User') ||
-      html.includes('Please enter Userid') ||
-      html.includes('Please enter Password') ||
-      alertText.toLowerCase().includes('password') ||
-      alertText.toLowerCase().includes('invalid') ||
-      alertText.toLowerCase().includes('userid')
+      htmlLower.includes('invalid password') ||
+      htmlLower.includes('not authorised') ||
+      htmlLower.includes('not authorized') ||
+      htmlLower.includes('password does not match') ||
+      htmlLower.includes('invalid user') ||
+      htmlLower.includes('please enter userid') ||
+      htmlLower.includes('please enter password') ||
+      alertLower.includes('password') ||
+      alertLower.includes('invalid') ||
+      alertLower.includes('userid') ||
+      alertLower.includes('authorised') ||
+      alertLower.includes('authorized')
     ) {
-      return { success: false, error: alertText || 'Invalid Roll Number or Password.', status: 'INVALID_CREDENTIALS' };
+      return {
+        success: false,
+        error: alertText || 'Invalid Roll Number or Password.',
+        status: 'INVALID_CREDENTIALS',
+      };
     }
 
     // Extract navigation links
