@@ -2,8 +2,8 @@ name: Sync IMS NSIT Notices
 
 on:
   schedule:
-    # Run every hour
-    - cron: '0 * * * *'
+    # Run every 30 minutes at off-peak minutes (:17 and :47) to bypass GitHub Actions top-of-the-hour queue backlogs
+    - cron: '17,47 * * * *'
   workflow_dispatch:
     inputs:
       include_archive:
@@ -43,10 +43,10 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/notices.json
+          git add data/ public/data/
           if git diff --staged --quiet; then
             echo "No new notices found. Nothing to commit."
           else
-            git commit -m "chore(data): auto-sync notices [skip ci]"
+            git commit -m "AutoSync: Update IMS NSUT notices catalog [$(date '+%Y-%m-%d %H:%M UTC')] [skip ci]"
             git push
           fi
