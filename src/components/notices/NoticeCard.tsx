@@ -13,12 +13,28 @@ interface NoticeCardProps {
 export function NoticeCard({ notice, onOpenNotice }: NoticeCardProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopyLink = (e: React.MouseEvent) => {
+  const getShareableUrl = () => {
+    if (!notice.attachmentUrl) return '';
+    if (notice.attachmentUrl.includes('imsnsit.org')) {
+      const base = typeof window !== 'undefined' ? window.location.origin : 'https://ims-app-pearl.vercel.app';
+      return `${base}/api/document?url=${encodeURIComponent(notice.attachmentUrl)}`;
+    }
+    return notice.attachmentUrl;
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (notice.attachmentUrl) {
-      navigator.clipboard.writeText(notice.attachmentUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+    const shareUrl = getShareableUrl();
+    if (!shareUrl) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Fallback for older webview
+      }
     }
   };
 

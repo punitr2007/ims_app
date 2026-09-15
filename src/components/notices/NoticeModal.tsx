@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Notice } from '@/lib/ims/types';
-import { X, ExternalLink, Calendar, Building, User, Download, FileText } from 'lucide-react';
+import { X, ExternalLink, Calendar, Building, User, Download, FileText, Share2, Check } from 'lucide-react';
 
 interface NoticeModalProps {
   notice: Notice | null;
@@ -10,7 +10,30 @@ interface NoticeModalProps {
 }
 
 export function NoticeModal({ notice, onClose }: NoticeModalProps) {
+  const [copied, setCopied] = useState(false);
+
   if (!notice) return null;
+
+  const getShareableUrl = (rawUrl: string) => {
+    if (rawUrl.includes('imsnsit.org')) {
+      const base = typeof window !== 'undefined' ? window.location.origin : 'https://ims-app-pearl.vercel.app';
+      return `${base}/api/document?url=${encodeURIComponent(rawUrl)}`;
+    }
+    return rawUrl;
+  };
+
+  const handleCopyLink = async (rawUrl: string) => {
+    const shareUrl = getShareableUrl(rawUrl);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Fallback
+      }
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -67,6 +90,24 @@ export function NoticeModal({ notice, onClose }: NoticeModalProps) {
                       <span className="truncate">{notice.attachmentUrl}</span>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyLink(notice.attachmentUrl!)}
+                        className="flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl sm:rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs shrink-0 transition-colors border border-white/10 active:scale-[0.98]"
+                        title="Copy direct shareable document link"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-emerald-300">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5 text-brand-400" />
+                            <span>Share Link</span>
+                          </>
+                        )}
+                      </button>
                       <a
                         href={docStreamUrl}
                         target="_blank"
