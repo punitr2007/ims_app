@@ -198,38 +198,56 @@ export class ImsClient {
     const html = response.data || '';
     const $ = cheerio.load(html);
 
-    // Check for login errors
-    const alertMatch = html.match(/alert\(['"]([^'"]+)['"]\)/i);
-    const alertText = alertMatch ? alertMatch[1] : '';
-    const htmlLower = html.toLowerCase();
-    const alertLower = alertText.toLowerCase();
+    // Extract any red error text displayed by IMS NSIT
+    const redErrors: string[] = [];
+    $('font[color="red"], font[color="RED"], font[color=red]').each((_, el) => {
+      const text = $(el).text().trim().replace(/\s+/g, ' ');
+      if (text && !text.toLowerCase().includes('please do not share your password')) {
+        redErrors.push(text);
+      }
+    });
 
+    const errorText = redErrors.join(' ').trim();
+    const errorTextLower = errorText.toLowerCase();
+
+    // Check for explicit CAPTCHA error
     if (
-      htmlLower.includes('invalid security number') ||
-      htmlLower.includes('please enter captcha') ||
-      alertLower.includes('security') ||
-      alertLower.includes('captcha')
+      errorTextLower.includes('invalid security number') ||
+      errorTextLower.includes('please enter captcha')
     ) {
       return { success: false, error: 'Wrong CAPTCHA. Please try again.', status: 'WRONG_CAPTCHA' };
     }
 
+    // Check for explicit credential / authorization error
     if (
-      htmlLower.includes('invalid password') ||
-      htmlLower.includes('not authorised') ||
-      htmlLower.includes('not authorized') ||
-      htmlLower.includes('password does not match') ||
-      htmlLower.includes('invalid user') ||
-      htmlLower.includes('please enter userid') ||
-      htmlLower.includes('please enter password') ||
-      alertLower.includes('password') ||
-      alertLower.includes('invalid') ||
-      alertLower.includes('userid') ||
-      alertLower.includes('authorised') ||
-      alertLower.includes('authorized')
+      errorTextLower.includes('invalid password') ||
+      errorTextLower.includes('not authorised') ||
+      errorTextLower.includes('not authorized') ||
+      errorTextLower.includes('invalid user') ||
+      errorTextLower.includes('please enter userid') ||
+      errorTextLower.includes('please enter password')
     ) {
       return {
         success: false,
-        error: alertText || 'Invalid Roll Number or Password.',
+        error: errorText || 'Invalid Roll Number or Password.',
+        status: 'INVALID_CREDENTIALS',
+      };
+    }
+
+    // If there is any other error message displayed on the page
+    if (errorText.length > 0) {
+      return {
+        success: false,
+        error: errorText,
+        status: 'INVALID_CREDENTIALS',
+      };
+    }
+
+    // If still on the login form with no error text and no authenticated state
+    if ($('input#uid, input[name="uid"]').length > 0 && !html.includes('openURL') && !html.includes('My Profile')) {
+      return {
+        success: false,
+        error: 'Invalid Roll Number, Password, or Session Expired.',
         status: 'INVALID_CREDENTIALS',
       };
     }
