@@ -2,20 +2,21 @@ import { createHash } from 'crypto';
 
 /**
  * Generates a stable synthetic 16-character SHA-256 hash ID for a notice.
- * Prioritizes (publishedDate + normalizedAttachmentUrl + normalizedTitle).
+ * Keyed strictly on (publishedDate + normalizedTitle + normalizedDepartment).
+ * 
+ * NOTE: We deliberately EXCLUDE `attachmentUrl` from the hash because IMS NSIT
+ * randomly re-encrypts the query string in `plum_url.php?...` on every page load.
  */
 export function generateNoticeId(
   title: string,
   publishedDate: string,
-  attachmentUrl: string | null
+  department: string = ''
 ): string {
   const normTitle = title.toLowerCase().replace(/\s+/g, ' ').trim();
   const normDate = publishedDate.trim();
-  const normUrl = (attachmentUrl || '').trim();
+  const normDept = department.toLowerCase().replace(/\s+/g, ' ').trim();
 
-  // If there's an attachment URL (which contains specific query strings / Google docs links),
-  // it provides the highest deduplication stability.
-  const payload = `${normDate}|${normUrl}|${normTitle}`;
+  const payload = `${normDate}|${normTitle}|${normDept}`;
   return createHash('sha256').update(payload).digest('hex').slice(0, 16);
 }
 
@@ -26,7 +27,7 @@ export function generateNoticeId(
  */
 export function parsePublisherInfo(rawText: string): { publisher: string; department: string } {
   let cleaned = rawText.replace(/Published By:\s*/i, '').trim();
-  cleaned = cleaned.replace(/^,\s*/, ''); // Remove leading commas if publisher name is empty
+  cleaned = cleaned.replace(/^,\s*/, '');
 
   if (!cleaned) {
     return { publisher: 'Administration', department: 'General' };

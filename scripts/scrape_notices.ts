@@ -63,7 +63,7 @@ function parseNoticesHtml(html: string): Notice[] {
         const { publisher, department } = parsePublisherInfo(fontPublisher);
 
         if (title.length > 2) {
-          const id = generateNoticeId(title, publishedDate, attachmentUrl);
+          const id = generateNoticeId(title, publishedDate, department);
           notices.push({
             id,
             title,
@@ -133,25 +133,32 @@ async function run() {
     try {
       const raw = fs.readFileSync(NOTICES_FILE, 'utf-8');
       existingNotices = JSON.parse(raw);
-      console.log(`[Scraper] Loaded ${existingNotices.length} existing notices from ${NOTICES_FILE}`);
     } catch (err) {
       console.warn('[Scraper] Could not parse existing notices.json, starting fresh.', err);
     }
   }
 
+  // Deduplicate existing entries with the new invariant key
   const noticeMap = new Map<string, Notice>();
   for (const n of existingNotices) {
-    noticeMap.set(n.id, n);
+    const cleanId = generateNoticeId(n.title, n.publishedDate, n.department);
+    n.id = cleanId;
+    noticeMap.set(cleanId, n);
   }
 
   let newLiveCount = 0;
   try {
     const liveNotices = await scrapeLiveNotices();
     for (const notice of liveNotices) {
-      if (!noticeMap.has(notice.id)) {
+      const existing = noticeMap.get(notice.id);
+      if (!existing) {
         newLiveCount++;
+        noticeMap.set(notice.id, notice);
+      } else {
+        // Update active attachment URL while preserving original scrapedAt
+        existing.attachmentUrl = notice.attachmentUrl;
+        existing.isNew = notice.isNew;
       }
-      noticeMap.set(notice.id, notice);
     }
   } catch (err: any) {
     console.error(`[Scraper] Failed to fetch live notices: ${err.message}`);
@@ -164,8 +171,8 @@ async function run() {
       for (const notice of archiveNotices) {
         if (!noticeMap.has(notice.id)) {
           newArchiveCount++;
+          noticeMap.set(notice.id, notice);
         }
-        noticeMap.set(notice.id, notice);
       }
       console.log(`[Scraper] Archive sync: ${newArchiveCount} new archived notices merged.`);
     } catch (err: any) {
@@ -182,16 +189,13 @@ async function run() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(PUBLIC_DATA_DIR)) fs.mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
 
-  // Save compact JSON
   fs.writeFileSync(NOTICES_FILE, JSON.stringify(mergedNotices), 'utf-8');
   fs.writeFileSync(PUBLIC_NOTICES_FILE, JSON.stringify(mergedNotices), 'utf-8');
   
-  // Save recent 1500 notices for ultra-fast initial load
   const recentNotices = mergedNotices.slice(0, 1500);
   fs.writeFileSync(RECENT_NOTICES_FILE, JSON.stringify(recentNotices), 'utf-8');
 
-  console.log(`[Scraper] Saved ${mergedNotices.length} total notices to ${NOTICES_FILE}`);
-  console.log(`[Scraper] Saved ${recentNotices.length} recent notices to ${RECENT_NOTICES_FILE}`);
+  console.log(`[Scraper] Cleaned & saved ${mergedNotices.length} unique notices (${newLiveCount} new live notices added).`);
 }
 
 run().catch((err) => {

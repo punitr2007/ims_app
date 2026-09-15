@@ -25,11 +25,11 @@ HEADERS = {
     'Accept-Language': 'en-US,en;q=0.9',
 }
 
-def generate_notice_id(title: str, published_date: str, attachment_url: str) -> str:
-    norm_title = re.sub(r'\s+', ' ', title.lower()).strip()
-    norm_date = published_date.strip()
-    norm_url = (attachment_url or '').strip()
-    payload = f"{norm_date}|{norm_url}|{norm_title}".encode('utf-8')
+def generate_notice_id(title: str, published_date: str, department: str = '') -> str:
+    norm_title = re.sub(r'\s+', ' ', (title or '').lower()).strip()
+    norm_date = (published_date or '').strip()
+    norm_dept = re.sub(r'\s+', ' ', (department or '').lower()).strip()
+    payload = f"{norm_date}|{norm_title}|{norm_dept}".encode('utf-8')
     return hashlib.sha256(payload).hexdigest()[:16]
 
 def parse_publisher_info(raw_text: str):
@@ -43,7 +43,7 @@ def parse_publisher_info(raw_text: str):
         department = parts[-1]
         publisher = ', '.join(parts[:-1])
         return publisher or 'Office', department
-    elif len(parts) === 1:
+    elif len(parts) == 1:
         return parts[0], parts[0]
     return cleaned, 'General'
 
@@ -78,7 +78,6 @@ def parse_html_notices(html: str):
                         attachment_url = urllib.parse.urljoin(NOTIFICATIONS_URL, raw_href)
                         is_external_link = 'imsnsit.org' not in attachment_url
                 else:
-                    # Strip font tags to get plain title
                     cleaned_content = re.sub(r'<font[^>]*>.*?</font>', '', content_td, flags=re.DOTALL | re.IGNORECASE)
                     title = re.sub(r'<[^>]+>', '', cleaned_content).strip()
                 
@@ -90,7 +89,7 @@ def parse_html_notices(html: str):
                 publisher, department = parse_publisher_info(re.sub(r'<[^>]+>', '', font_publisher))
                 
                 if len(title) > 2:
-                    nid = generate_notice_id(title, published_date, attachment_url or '')
+                    nid = generate_notice_id(title, published_date, department)
                     notices.append({
                         'id': nid,
                         'title': title,
@@ -120,7 +119,11 @@ def main():
         except Exception:
             pass
 
-    notice_map = {n['id']: n for n in existing_notices}
+    notice_map = {}
+    for n in existing_notices:
+        clean_id = generate_notice_id(n.get('title', ''), n.get('publishedDate', ''), n.get('department', ''))
+        n['id'] = clean_id
+        notice_map[clean_id] = n
     
     live_notices = fetch_live_notices()
     new_count = 0
@@ -150,7 +153,7 @@ def main():
     with open(RECENT_NOTICES_FILE, 'w', encoding='utf-8') as f:
         json.dump(merged[:1500], f, separators=(',', ':'))
 
-    print(f"[Python Scraper] Updated catalog: {len(merged)} notices total ({new_count} new live notices added).")
+    print(f"[Python Scraper] Cleaned & saved {len(merged)} unique notices ({new_count} new live notices added).")
 
 if __name__ == '__main__':
     main()
