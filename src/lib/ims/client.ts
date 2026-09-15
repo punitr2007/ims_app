@@ -6,13 +6,13 @@ import { AttendanceSubject, StudentProfile, AttendanceResponse } from './types';
 import { calculateSubjectBunks, computeOverallAttendance } from './calculator';
 
 const BASE_URL = 'https://www.imsnsit.org/imsnsit/';
-const LOGIN_URL = `${BASE_URL}student_login.php`;
-const LOGIN_INIT_URL = `${BASE_URL}student_login110.php`;
+const LOGIN_INDEX_URL = `${BASE_URL}index3.htm`;
+const LOGIN_PAGE_URL = `${BASE_URL}plum5_fw_login.php`;
 
 export function getFinancialYear(): string {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() + 1; // 1-indexed
+  const month = now.getMonth() + 1;
 
   if (month <= 5) {
     const prevYear = year - 1;
@@ -28,6 +28,8 @@ export class ImsClient {
   public jar: CookieJar;
   public client: AxiosInstance;
   public hrandNum: string = '';
+  public encFy: string = '';
+  public comp: string = 'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY';
   public profileUrl: string = '';
   public myActivitiesUrl: string = '';
   public allUrls: Record<string, string> = {};
@@ -39,7 +41,7 @@ export class ImsClient {
       axios.create({
         jar: this.jar,
         withCredentials: true,
-        timeout: 10000,
+        timeout: 12000,
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -52,24 +54,43 @@ export class ImsClient {
   }
 
   /**
-   * Initializes session and retrieves CAPTCHA image + HRAND_NUM
+   * Initializes session and retrieves CAPTCHA image + form tokens
    */
-  async getCaptchaAndTokens(): Promise<{ captchaBase64: string; captchaBuffer: Buffer; hrandNum: string }> {
-    // 1. Visit banner/login110
-    await this.client.get(LOGIN_INIT_URL, {
+  async getCaptchaAndTokens(): Promise<{
+    captchaBase64: string;
+    captchaBuffer: Buffer;
+    hrandNum: string;
+    encFy: string;
+    comp: string;
+  }> {
+    // 1. Visit index3.htm to set referrer state
+    await this.client.get(LOGIN_INDEX_URL, {
       headers: { Referer: BASE_URL },
     });
 
     // 2. Visit main login frame
-    const loginRes = await this.client.get(LOGIN_URL, {
-      headers: { Referer: BASE_URL },
+    const loginRes = await this.client.get(LOGIN_PAGE_URL, {
+      headers: { Referer: LOGIN_INDEX_URL },
     });
 
-    const $ = cheerio.load(loginRes.data);
+    const $ = cheerio.load(loginRes.data || '');
     const captchaImgSrc = $('#captchaimg').attr('src');
-    const hrand = $('#HRAND_NUM').attr('value') || $('input[name="HRAND_NUM"]').attr('value') || '';
+    const hrand =
+      $('#HRAND_NUM').attr('value') ||
+      $('input[name="HRAND_NUM"]').attr('value') ||
+      '';
+    const encFyVal =
+      $('#enc_fy').attr('value') ||
+      $('input[name="enc_fy"]').attr('value') ||
+      '';
+    const compVal =
+      $('#comp').attr('value') ||
+      $('input[name="comp"]').attr('value') ||
+      'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY';
 
     this.hrandNum = hrand;
+    this.encFy = encFyVal;
+    this.comp = compVal;
 
     if (!captchaImgSrc) {
       throw new Error('Failed to locate CAPTCHA image element on login page.');
@@ -80,7 +101,7 @@ export class ImsClient {
     // 3. Download CAPTCHA Image
     const captchaRes = await this.client.get(captchaFullUrl, {
       responseType: 'arraybuffer',
-      headers: { Referer: LOGIN_URL },
+      headers: { Referer: LOGIN_PAGE_URL },
     });
 
     const buffer = Buffer.from(captchaRes.data);
@@ -90,6 +111,8 @@ export class ImsClient {
       captchaBase64: base64,
       captchaBuffer: buffer,
       hrandNum: hrand,
+      encFy: encFyVal,
+      comp: compVal,
     };
   }
 
@@ -100,44 +123,52 @@ export class ImsClient {
     uid: string,
     pwd: string,
     captchaText: string,
-    overrideHrand?: string
+    overrideTokens?: { hrandNum?: string; encFy?: string; comp?: string }
   ): Promise<{ success: boolean; error?: string; status?: AttendanceResponse['status'] }> {
-    const hrand = overrideHrand || this.hrandNum;
-    const fy = getFinancialYear();
+    const hrand = overrideTokens?.hrandNum || this.hrandNum;
+    const encFy = overrideTokens?.encFy || this.encFy;
+    const comp = overrideTokens?.comp || this.comp;
 
     const postData = new URLSearchParams({
-      f: '',
       uid,
       pwd,
-      HRAND_NUM: hrand,
-      fy,
-      comp: 'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY',
       cap: captchaText.trim(),
-      logintype: 'student',
+      HRAND_NUM: hrand,
+      enc_fy: encFy,
+      comp: comp,
     });
 
-    const response = await this.client.post(LOGIN_URL, postData.toString(), {
+    const response = await this.client.post(LOGIN_PAGE_URL, postData.toString(), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': LOGIN_URL,
+        'Referer': LOGIN_PAGE_URL,
         'Origin': 'https://www.imsnsit.org',
       },
     });
 
-    const html = response.data;
+    const html = response.data || '';
     const $ = cheerio.load(html);
 
     // Check for login errors
-    const errorFont = $('td.plum_field font, font[color="red"]').text();
-    if (html.includes('Invalid Security Number') || errorFont.includes('Invalid Security Number')) {
+    const alertMatch = html.match(/alert\(['"]([^'"]+)['"]\)/i);
+    const alertText = alertMatch ? alertMatch[1] : '';
+
+    if (
+      html.includes('Invalid Security Number') ||
+      alertText.toLowerCase().includes('security') ||
+      alertText.toLowerCase().includes('captcha')
+    ) {
       return { success: false, error: 'Wrong CAPTCHA. Please try again.', status: 'WRONG_CAPTCHA' };
     }
+
     if (
       html.includes('Invalid password') ||
       html.includes('Your password does not match') ||
-      html.includes('Invalid User')
+      html.includes('Invalid User') ||
+      alertText.toLowerCase().includes('password') ||
+      alertText.toLowerCase().includes('invalid')
     ) {
-      return { success: false, error: 'Invalid Roll Number or Password.', status: 'INVALID_CREDENTIALS' };
+      return { success: false, error: alertText || 'Invalid Roll Number or Password.', status: 'INVALID_CREDENTIALS' };
     }
 
     // Extract navigation links
@@ -150,12 +181,19 @@ export class ImsClient {
       }
     });
 
-    if (!this.myActivitiesUrl && !this.profileUrl) {
-      // If links were not found in body, check frame sources
-      return { success: false, error: 'Failed to parse session navigation.', status: 'SERVER_ERROR' };
+    // Check for JavaScript frame redirection or openURL
+    const openUrlMatches = html.match(/openURL\(['"]([^'"]+)['"]/g);
+    if (openUrlMatches) {
+      for (const m of openUrlMatches) {
+        const urlMatch = m.match(/openURL\(['"]([^'"]+)['"]/);
+        if (urlMatch && urlMatch[1]) {
+          const u = urlMatch[1];
+          if (u.includes('profile')) this.profileUrl = u;
+          if (u.includes('activities') || u.includes('student')) this.myActivitiesUrl = u;
+        }
+      }
     }
 
-    // Extract all activity URLs
     await this.extractActivityUrls();
 
     return { success: true, status: 'AUTHENTICATED' };
@@ -163,32 +201,38 @@ export class ImsClient {
 
   async extractActivityUrls(): Promise<void> {
     if (!this.myActivitiesUrl) return;
-    const res = await this.client.get(this.myActivitiesUrl, {
-      headers: { Referer: LOGIN_URL },
-    });
-    const $ = cheerio.load(res.data);
+    try {
+      const targetUrl = new URL(this.myActivitiesUrl, BASE_URL).toString();
+      const res = await this.client.get(targetUrl, {
+        headers: { Referer: LOGIN_PAGE_URL },
+      });
+      const $ = cheerio.load(res.data || '');
 
-    $('a').each((_, elem) => {
-      const text = $(elem).text().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-      const href = $(elem).attr('href');
-      if (href && href !== '#') {
-        this.allUrls[text] = href;
-      }
-    });
+      $('a').each((_, elem) => {
+        const text = $(elem).text().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const href = $(elem).attr('href');
+        if (href && href !== '#') {
+          this.allUrls[text] = href;
+        }
+      });
+    } catch {
+      // ignore
+    }
   }
 
   /**
-   * Fetches Enrolled Courses map (code -> course details)
+   * Fetches Enrolled Courses map
    */
   async getEnrolledCourses(): Promise<Record<string, { subjectName: string; credits?: string }>> {
     const coursesUrl = this.allUrls['currentsemcoursesregistered'];
     if (!coursesUrl) return {};
 
     try {
-      const res = await this.client.get(coursesUrl, {
-        headers: { Referer: this.myActivitiesUrl },
+      const targetUrl = new URL(coursesUrl, BASE_URL).toString();
+      const res = await this.client.get(targetUrl, {
+        headers: { Referer: this.myActivitiesUrl || LOGIN_PAGE_URL },
       });
-      const $ = cheerio.load(res.data);
+      const $ = cheerio.load(res.data || '');
 
       const divHead = $('div#div2.plum_head').text();
       const semMatch = divHead.match(/Semester\s+(\d+|[A-Za-z]+)/i);
@@ -222,10 +266,11 @@ export class ImsClient {
   async getProfile(): Promise<StudentProfile | undefined> {
     if (!this.profileUrl) return undefined;
     try {
-      const res = await this.client.get(this.profileUrl, {
-        headers: { Referer: LOGIN_URL },
+      const targetUrl = new URL(this.profileUrl, BASE_URL).toString();
+      const res = await this.client.get(targetUrl, {
+        headers: { Referer: LOGIN_PAGE_URL },
       });
-      const $ = cheerio.load(res.data);
+      const $ = cheerio.load(res.data || '');
 
       let name = '';
       let rollNumber = '';
@@ -267,11 +312,12 @@ export class ImsClient {
       return { success: false, error: 'Attendance module URL not available.' };
     }
 
-    const initRes = await this.client.get(attendanceUrl, {
-      headers: { Referer: this.myActivitiesUrl },
+    const targetUrl = new URL(attendanceUrl, BASE_URL).toString();
+    const initRes = await this.client.get(targetUrl, {
+      headers: { Referer: this.myActivitiesUrl || LOGIN_PAGE_URL },
     });
 
-    const $init = cheerio.load(initRes.data);
+    const $init = cheerio.load(initRes.data || '');
     const encYear = $init('#enc_year').attr('value') || '';
     const encSem = $init('#enc_sem').attr('value') || '';
     const recentitycode = $init('[name=recentitycode]').attr('value') || uid;
@@ -293,16 +339,15 @@ export class ImsClient {
       ecode: '',
     });
 
-    const attRes = await this.client.post(attendanceUrl, postData.toString(), {
+    const attRes = await this.client.post(targetUrl, postData.toString(), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': attendanceUrl,
+        'Referer': targetUrl,
       },
     });
 
-    const $ = cheerio.load(attRes.data);
+    const $ = cheerio.load(attRes.data || '');
 
-    // Subject codes from table header
     const subjectHeaders = $('div#myreport table.plum_fieldbig tr.plum_head');
     const subjectsList: string[] = [];
 
@@ -316,7 +361,6 @@ export class ImsClient {
         });
     }
 
-    // Extract summary rows (Total, Present, Percentage)
     const summaryRows = subjectHeaders.slice(-4);
     const stats: Record<string, Record<string, string>> = {};
     for (const code of subjectsList) {
@@ -341,7 +385,6 @@ export class ImsClient {
       const course = coursesMap[code];
       const data = stats[code] || {};
 
-      // Match keys like "total class held", "classes attended", etc.
       let totalHeld = 0;
       let attended = 0;
 

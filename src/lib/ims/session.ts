@@ -5,6 +5,8 @@ const SECRET_KEY = process.env.SESSION_SECRET || 'ims-session-stateless-secret-k
 export interface SessionPayload {
   cookies: string[];
   hrandNum: string;
+  encFy?: string;
+  comp?: string;
   createdAt: number;
 }
 
@@ -42,7 +44,7 @@ export function decodeSessionToken(token: string): SessionPayload | null {
       return null;
     }
     return payload;
-  } catch (err) {
+  } catch {
     return null;
   }
 }

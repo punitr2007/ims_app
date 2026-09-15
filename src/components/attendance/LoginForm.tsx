@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { AttendanceResponse } from '@/lib/ims/types';
-import { Lock, User, KeyRound, Loader2, AlertTriangle, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
-import clsx from 'clsx';
+import { Lock, User, KeyRound, Loader2, AlertTriangle, RefreshCw, Sparkles, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 interface LoginFormProps {
   onSuccess: (data: AttendanceResponse) => void;
@@ -22,7 +21,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const handleFetchFreshCaptcha = async () => {
     try {
       setLoading(true);
-      setLoadingStep('Fetching fresh CAPTCHA...');
+      setLoadingStep('Fetching security code...');
       const res = await fetch('/api/captcha');
       const data = await res.json();
       if (data.success) {
@@ -31,7 +30,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         setCaptchaText('');
         setError(null);
       } else {
-        setError(data.error || 'Failed to fetch CAPTCHA.');
+        setError(data.error || 'Failed to fetch security code.');
       }
     } catch {
       setError('Network error while connecting to server.');
@@ -55,12 +54,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       if (captchaImage && sessionToken) {
         // Manual CAPTCHA flow
         if (!captchaText || captchaText.length < 3) {
-          setError('Please enter the CAPTCHA code shown in the image.');
+          setError('Please enter the 4-5 digits shown in the security image.');
           setLoading(false);
           return;
         }
 
-        setLoadingStep('Authenticating with CAPTCHA...');
+        setLoadingStep('Verifying security code & fetching attendance...');
         const res = await fetch('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -77,7 +76,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           onSuccess(data);
         } else {
           setError(data.error || 'Login failed.');
-          if (data.status === 'NEED_MANUAL_CAPTCHA' && data.captchaBase64) {
+          if (data.captchaBase64) {
             setCaptchaImage(data.captchaBase64);
             setSessionToken(data.sessionToken || null);
             setCaptchaText('');
@@ -85,7 +84,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         }
       } else {
         // One-shot auto-solve flow
-        setLoadingStep('Solving CAPTCHA & fetching attendance...');
+        setLoadingStep('Connecting to IMS portal...');
         const res = await fetch('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -99,11 +98,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         if (data.success) {
           onSuccess(data);
         } else {
-          if (data.status === 'NEED_MANUAL_CAPTCHA' && data.captchaBase64) {
+          if (data.captchaBase64) {
             setCaptchaImage(data.captchaBase64);
             setSessionToken(data.sessionToken || null);
             setCaptchaText('');
-            setError('Could not auto-solve CAPTCHA. Please enter the code below.');
+            setError(data.error || 'Please enter the code shown in the image.');
           } else {
             setError(data.error || 'Login failed.');
           }
@@ -133,8 +132,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3.5 rounded-2xl bg-rose-950/50 border border-rose-800/40 text-rose-300 text-xs flex items-start gap-2.5 animate-in fade-in">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-800/40 text-amber-200 text-xs flex items-start gap-2.5 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
@@ -172,37 +171,38 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             />
           </div>
 
-          {/* Manual CAPTCHA Box (Shown if auto-solve needs confirmation or fallback) */}
+          {/* Manual Security Code Box */}
           {captchaImage && (
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-brand-500/30 space-y-3 animate-in fade-in">
+            <div className="p-4 rounded-2xl bg-slate-900/95 border border-brand-500/40 space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-brand-300">Security Verification</span>
+                <span className="text-xs font-semibold text-brand-300">Security Verification Code</span>
                 <button
                   type="button"
                   onClick={handleFetchFreshCaptcha}
-                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1"
+                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
                 >
                   <RefreshCw className="w-3 h-3" />
                   <span>Reload Image</span>
                 </button>
               </div>
 
-              <div className="flex items-center justify-center bg-slate-950 p-2 rounded-xl border border-white/10">
+              <div className="flex items-center justify-center bg-white p-2 rounded-xl border border-white/20 shadow-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={captchaImage}
                   alt="IMS Captcha"
-                  className="h-12 object-contain rounded filter contrast-125"
+                  className="h-11 object-contain filter contrast-125"
                 />
               </div>
 
               <input
                 type="text"
                 autoFocus
+                required
                 value={captchaText}
                 onChange={(e) => setCaptchaText(e.target.value)}
                 placeholder="Enter characters from image"
-                className="w-full px-4 py-2 bg-slate-950 border border-white/15 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 text-center font-mono tracking-widest text-base uppercase"
+                className="w-full px-4 py-2.5 bg-slate-950 border border-brand-500/40 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-mono tracking-widest text-base font-bold uppercase"
               />
             </div>
           )}
@@ -221,10 +221,22 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             ) : (
               <>
                 <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                <span>{captchaImage ? 'Submit Verification & View Attendance' : 'Fetch Attendance'}</span>
+                <span>{captchaImage ? 'Verify & View Attendance' : 'Fetch Attendance'}</span>
               </>
             )}
           </button>
+
+          {!captchaImage && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleFetchFreshCaptcha}
+                className="text-[11px] text-slate-400 hover:text-brand-300 transition-colors"
+              >
+                Enter CAPTCHA manually instead
+              </button>
+            </div>
+          )}
         </form>
 
         <div className="text-center pt-2 border-t border-white/5">

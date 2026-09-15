@@ -1,13 +1,13 @@
 export interface Notice {
   id: string; // Synthetic 16-char SHA-256 hash
   title: string;
-  publishedDate: string; // ISO format or DD-MM-YYYY format
+  publishedDate: string;
   publisher: string;
   department: string;
   attachmentUrl: string | null;
   isExternalLink: boolean;
   isNew?: boolean;
-  scrapedAt: string; // ISO date
+  scrapedAt: string;
 }
 
 export interface AttendanceSubject {
@@ -18,9 +18,9 @@ export interface AttendanceSubject {
   totalHeld: number;
   attended: number;
   percentage: number;
-  status: 'safe' | 'warning' | 'danger'; // safe >= 75%, warning 70-74%, danger < 70%
-  bunkableClasses: number; // How many classes can be missed while staying >= 75%
-  requiredClasses: number; // How many consecutive classes must be attended to reach 75%
+  status: 'safe' | 'warning' | 'danger';
+  bunkableClasses: number;
+  requiredClasses: number;
 }
 
 export interface StudentProfile {
@@ -46,8 +46,9 @@ export interface AttendanceResponse {
 }
 
 export interface CaptchaSessionState {
-  phpsessid: string;
+  cookies: string[];
   hrandNum: string;
-  captchaBase64: string;
-  timestamp: number;
+  encFy?: string;
+  comp?: string;
+  createdAt: number;
 }
