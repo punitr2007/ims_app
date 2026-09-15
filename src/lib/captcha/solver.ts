@@ -21,15 +21,21 @@ async function getWorker(): Promise<Tesseract.Worker> {
  */
 export async function solveCaptchaServer(imageBuffer: Buffer): Promise<string> {
   try {
-    const worker = await getWorker();
-    const {
-      data: { text },
-    } = await worker.recognize(imageBuffer);
+    const ocrTask = (async () => {
+      const worker = await getWorker();
+      const {
+        data: { text },
+      } = await worker.recognize(imageBuffer);
+      return text.trim().replace(/[^0-9]/g, '');
+    })();
 
-    const cleaned = text.trim().replace(/[^0-9]/g, '');
-    return cleaned;
+    const timeoutTask = new Promise<string>((_, reject) =>
+      setTimeout(() => reject(new Error('OCR Timeout')), 4500)
+    );
+
+    return await Promise.race([ocrTask, timeoutTask]);
   } catch (err) {
-    console.error('[OCR Error]', err);
+    console.error('[OCR Error / Fallback]', err);
     return '';
   }
 }

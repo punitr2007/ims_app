@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/attendance/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "src/app/api/captcha/route.ts": {
+      "maxDuration": 15,
+      "memory": 512
+    }
+  }
+}
