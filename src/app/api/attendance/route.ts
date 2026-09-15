@@ -38,11 +38,15 @@ export async function POST(req: NextRequest) {
       client.hrandNum = decoded.hrandNum;
       client.encFy = decoded.encFy || '';
       client.comp = decoded.comp || 'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY';
+      client.fy = decoded.fy || '';
+      client.t = decoded.t || 'swx';
 
       const authRes = await client.authenticate(rollNumber, password, captchaText, {
         hrandNum: decoded.hrandNum,
         encFy: decoded.encFy,
         comp: decoded.comp,
+        fy: decoded.fy,
+        t: decoded.t,
       });
 
       if (!authRes.success) {
@@ -55,6 +59,8 @@ export async function POST(req: NextRequest) {
             hrandNum: fresh.hrandNum,
             encFy: fresh.encFy,
             comp: fresh.comp,
+            fy: fresh.fy,
+            t: fresh.t,
             createdAt: Date.now(),
           });
 
@@ -95,7 +101,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const { captchaBase64, captchaBuffer, hrandNum, encFy, comp } = captchaData;
+      const { captchaBase64, captchaBuffer, hrandNum, encFy, comp, fy, t } = captchaData;
 
       let solvedOcr = '';
       try {
@@ -110,6 +116,8 @@ export async function POST(req: NextRequest) {
           hrandNum,
           encFy,
           comp,
+          fy,
+          t,
         });
 
         if (authResult.success) {
@@ -132,6 +140,8 @@ export async function POST(req: NextRequest) {
           hrandNum,
           encFy,
           comp,
+          fy,
+          t,
           createdAt: Date.now(),
         });
 

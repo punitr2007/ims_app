@@ -30,6 +30,8 @@ export class ImsClient {
   public hrandNum: string = '';
   public encFy: string = '';
   public comp: string = 'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY';
+  public fy: string = '';
+  public t: string = 'swx';
   public profileUrl: string = '';
   public myActivitiesUrl: string = '';
   public allUrls: Record<string, string> = {};
@@ -62,6 +64,8 @@ export class ImsClient {
     hrandNum: string;
     encFy: string;
     comp: string;
+    fy: string;
+    t: string;
   }> {
     // 1. Visit index3.htm to set referrer state
     await this.client.get(LOGIN_INDEX_URL, {
@@ -87,10 +91,20 @@ export class ImsClient {
       $('#comp').attr('value') ||
       $('input[name="comp"]').attr('value') ||
       'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY';
+    const fyVal =
+      $('#fy option:selected').attr('value') ||
+      $('#fy option').eq(1).attr('value') ||
+      getFinancialYear();
+    const tVal =
+      $('#t').attr('value') ||
+      $('input[name="t"]').attr('value') ||
+      'swx';
 
     this.hrandNum = hrand;
     this.encFy = encFyVal;
     this.comp = compVal;
+    this.fy = fyVal;
+    this.t = tVal;
 
     if (!captchaImgSrc) {
       throw new Error('Failed to locate CAPTCHA image element on login page.');
@@ -113,6 +127,8 @@ export class ImsClient {
       hrandNum: hrand,
       encFy: encFyVal,
       comp: compVal,
+      fy: fyVal,
+      t: tVal,
     };
   }
 
@@ -123,19 +139,25 @@ export class ImsClient {
     uid: string,
     pwd: string,
     captchaText: string,
-    overrideTokens?: { hrandNum?: string; encFy?: string; comp?: string }
+    overrideTokens?: { hrandNum?: string; encFy?: string; comp?: string; fy?: string; t?: string }
   ): Promise<{ success: boolean; error?: string; status?: AttendanceResponse['status'] }> {
     const hrand = overrideTokens?.hrandNum || this.hrandNum;
     const encFy = overrideTokens?.encFy || this.encFy;
     const comp = overrideTokens?.comp || this.comp;
+    const fy = overrideTokens?.fy || this.fy || getFinancialYear();
+    const t = overrideTokens?.t || this.t || 'swx';
 
     const postData = new URLSearchParams({
+      f: '',
       uid,
       pwd,
-      cap: captchaText.trim(),
-      HRAND_NUM: hrand,
+      fy,
       enc_fy: encFy,
-      comp: comp,
+      comp,
+      cap: captchaText.trim(),
+      login: 'Login',
+      t,
+      HRAND_NUM: hrand,
     });
 
     const response = await this.client.post(LOGIN_PAGE_URL, postData.toString(), {
@@ -155,6 +177,7 @@ export class ImsClient {
 
     if (
       html.includes('Invalid Security Number') ||
+      html.includes('Please Enter Captcha') ||
       alertText.toLowerCase().includes('security') ||
       alertText.toLowerCase().includes('captcha')
     ) {
@@ -165,8 +188,11 @@ export class ImsClient {
       html.includes('Invalid password') ||
       html.includes('Your password does not match') ||
       html.includes('Invalid User') ||
+      html.includes('Please enter Userid') ||
+      html.includes('Please enter Password') ||
       alertText.toLowerCase().includes('password') ||
-      alertText.toLowerCase().includes('invalid')
+      alertText.toLowerCase().includes('invalid') ||
+      alertText.toLowerCase().includes('userid')
     ) {
       return { success: false, error: alertText || 'Invalid Roll Number or Password.', status: 'INVALID_CREDENTIALS' };
     }

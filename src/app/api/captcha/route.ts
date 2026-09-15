@@ -5,7 +5,7 @@ import { encodeSessionToken } from '@/lib/ims/session';
 export async function GET() {
   try {
     const ims = new ImsClient();
-    const { captchaBase64, hrandNum, encFy, comp } = await ims.getCaptchaAndTokens();
+    const { captchaBase64, hrandNum, encFy, comp, fy, t } = await ims.getCaptchaAndTokens();
 
     const cookies = await ims.jar.getCookies('https://www.imsnsit.org');
     const cookieStrings = cookies.map((c) => c.toString());
@@ -15,6 +15,8 @@ export async function GET() {
       hrandNum,
       encFy,
       comp,
+      fy,
+      t,
       createdAt: Date.now(),
     });
 

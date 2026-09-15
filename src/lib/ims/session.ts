@@ -7,6 +7,8 @@ export interface SessionPayload {
   hrandNum: string;
   encFy?: string;
   comp?: string;
+  fy?: string;
+  t?: string;
   createdAt: number;
 }
 
