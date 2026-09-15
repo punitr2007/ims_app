@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-15T13:12:52.265013+00:00",
+  "timestamp": "2026-09-15T13:14:38.685677+00:00",
   "totalCount": 10026,
-  "newCount": 1,
+  "newCount": 0,
   "latestNotices": [
     {
       "id": "50f1889b80c9074f",
@@ -9,10 +9,10 @@
       "publishedDate": "15-09-2026",
       "publisher": "SRISHTI SAGAR, ASSISTANT PROFESSOR",
       "department": "ARCHITECTURE AND PLANNING",
-      "attachmentUrl": "https://www.imsnsit.org/imsnsit/plum_url.php?xdu9T4bzfTuKQy8LW6Oyp90ndI5hLc+yIiPMue8/AVGDpf3Gir2aEGpnkhCyDJ+asZKctRip2T5AeMzNRKjlMqZrAIBrK81hbgZveir0RLGRuRI9RrcfNp9VQB5klGuP3jEhwqHpWTIDplemCWP2IB3vu1oqTDHyZa05WzcUB8XAa08gwMedawy6qAGzU2KnXyo/VcQ+FhAVvvq20alBzF+YVZHo3UDGCKANhrryFKbPAPONRP1vr2Ydtu8uxH68",
+      "attachmentUrl": "https://www.imsnsit.org/imsnsit/plum_url.php?M8V/lww3VtIJeqBnS+KN55H86s+Rk/H2DNZryxFCveXz093bVeUlOGe/ziwjIrs1RpcGjoVlVYoQRJUIAXqgt4d+bywKbRbjVouRMbayQds77gwagoQxcRJPm+9MtAqYYupR3Jd995uDFqpLxpbSoUnDVwp1SaJysogETbAK+m0Tz7UnF2ZJRywakbcXLDFJuSS04B8hyN44rkQfAjEkeqk/gJLWKIxrO1su6aeckJBoL4ETgO8NZnHP1WsgV7pu",
       "isExternalLink": false,
       "isNew": true,
-      "scrapedAt": "2026-09-15T13:12:51.806642+00:00"
+      "scrapedAt": "2026-09-15T13:14:37.746782+00:00"
     },
     {
       "id": "47d470d538034613",
@@ -20,10 +20,10 @@
       "publishedDate": "15-09-2026",
       "publisher": "TARUNA TIWARI",
       "department": "ACADEMIC SECTION",
-      "attachmentUrl": "https://www.imsnsit.org/imsnsit/plum_url.php?xiYjLTaNPg3bdXko55mCN7JoE4f+xcyYzPZhX97cdTUZzgEvc2gMcAJYk0yrKWybw47Gg2/EnFtHg/hUA+ouZufpMLVKQZZQTfE8Xin7+BUEROkyWUAhsxxmqyU8J8NYEjvCxMd+Qr+n5A/qOWqlXwheRC5WL0RAa5p+L7U2XtNYaA4B6lj+ZoL7FPI8fE5U",
+      "attachmentUrl": "https://www.imsnsit.org/imsnsit/plum_url.php?oJpNgvLG0cT+VGTA1p8oM1Shs9TsAowqyMkSnjlD/ML1IZ4ysygeEdQ1lxjUaJd8QtvJn/qa6/v4g3CZxowhGLj002F2Dpp4/awbcF1aVxqTN5F2UXMse69sUwecXjUnfVV5XktxN4pJZ7RPjhXWflFOXCdiQUut3Kx4TroVJXy+ApwUGCZzhj7m1Wy0k7st",
       "isExternalLink": false,
       "isNew": true,
-      "scrapedAt": "2026-09-15T13:12:51.806642+00:00"
+      "scrapedAt": "2026-09-15T13:14:37.746782+00:00"
     },
     {
       "id": "2edb67e4f5b34367",
@@ -31,10 +31,10 @@
       "publishedDate": "14-09-2026",
       "publisher": "TARUNA TIWARI",
       "department": "ACADEMIC SECTION",
-      "attachmentUrl": "https://www.imsnsit.org/imsnsit/plum_url.php?Bl/f3jstkMeHS4v81UGD0HeiQkzTTSsoZqTdpz7KvhSJjm07SDrUV7xLj88Ev6aCnNF2tnAv42IhaczoM63jahEsOUqwMagmqe3QkbJLx8LO18Jg8aXcqgByvICfZ31WXeItrWmFYOOPIHFBb2CRGlaP5uHy1qFl8fHzkSMw+qqIh/B39wbU+iBiyEgAjUysmHqREQ8CyIBgFSjqoaWAojsVLbQU9kurWeFENxiNJ04=",
+      "attachmentUrl": "https://www.imsnsit.org/imsnsit/plum_url.php?w6e6EsuItYkLPKRZANWe2SyH6nvtcFY4nAy2XpA6mqAfQpTXwU4VnOZmtdtDYx1KPcUW0KEx621B6QtYOYvgWXHEh8sDkSdqy57LxXq8vYLtq4xORiiI/ZxwgkGS+oQ/IB+QtfXy1bMNdgQGMJGa2gEM4izjxMfA4G3CO4T9TDtXecSegRAbchChvAQB5u47VCKjnWh5xkKtyhuoQIDOx67xZaK3cy+vXp4JFCYNY5A=",
       "isExternalLink": false,
       "isNew": true,
-      "scrapedAt": "2026-09-15T13:12:51.806642+00:00"
+      "scrapedAt": "2026-09-15T13:14:37.746782+00:00"
     }
   ]
 }
