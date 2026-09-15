@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/layout/Navbar';
 
@@ -11,6 +11,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#030712',
+  colorScheme: 'dark',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,16 +29,17 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="dark" />
         <meta name="darkreader-lock" content="" />
+        <meta name="theme-color" content="#030712" />
       </head>
-      <body className="antialiased min-h-screen flex flex-col justify-between" suppressHydrationWarning>
+      <body className="antialiased min-h-screen flex flex-col justify-between pb-20 md:pb-0" suppressHydrationWarning>
         <div>
           <Navbar />
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
             {children}
           </main>
         </div>
 
-        <footer className="border-t border-white/5 py-6 px-4 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full">
+        <footer className="border-t border-white/5 py-6 px-4 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full mb-14 md:mb-0">
           <p>
             Unofficial student-built interface for Netaji Subhas University of Technology (NSUT). All notices and portal data remain property of IMS NSIT.
           </p>

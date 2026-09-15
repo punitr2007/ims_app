@@ -13,49 +13,49 @@ export function NoticeModal({ notice, onClose }: NoticeModalProps) {
   if (!notice) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
-        className="glass-panel bg-slate-900/95 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        className="glass-panel bg-slate-900/95 border border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-4 sm:p-6 border-b border-white/10 flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="p-4 sm:p-6 border-b border-white/10 flex items-start justify-between gap-3">
+          <div className="space-y-1.5 sm:space-y-2 pr-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-400">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-brand-400" />
                 {notice.publishedDate}
               </span>
               <span>•</span>
-              <span className="flex items-center gap-1 text-sky-300">
-                <Building className="w-3.5 h-3.5" />
-                {notice.department}
+              <span className="flex items-center gap-1 text-sky-300 truncate max-w-[200px]">
+                <Building className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{notice.department}</span>
               </span>
             </div>
-            <h2 className="text-base sm:text-xl font-bold text-white leading-snug">
+            <h2 className="text-sm sm:text-xl font-bold text-white leading-snug">
               {notice.title}
             </h2>
             {notice.publisher && (
-              <p className="text-xs text-slate-400 flex items-center gap-1">
-                <User className="w-3.5 h-3.5 text-slate-500" />
-                Published by: {notice.publisher}
+              <p className="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="truncate">Published by: {notice.publisher}</span>
               </p>
             )}
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 bg-slate-800/40"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body / Document Preview */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto min-h-[350px] flex flex-col items-center justify-center">
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto min-h-[300px] sm:min-h-[350px] flex flex-col items-center justify-center">
           {notice.attachmentUrl ? (
-            <div className="w-full h-full flex flex-col gap-4">
-              <div className="flex items-center justify-between gap-2 bg-slate-800/60 p-3 rounded-xl border border-white/5 text-xs">
+            <div className="w-full h-full flex flex-col gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-800/60 p-3 rounded-xl border border-white/5 text-xs">
                 <div className="flex items-center gap-2 text-slate-300 truncate">
                   <FileText className="w-4 h-4 text-brand-400 shrink-0" />
                   <span className="truncate">{notice.attachmentUrl}</span>
@@ -64,7 +64,7 @@ export function NoticeModal({ notice, onClose }: NoticeModalProps) {
                   href={notice.attachmentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-medium shrink-0 transition-colors shadow-sm"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs shrink-0 transition-colors shadow-sm active:scale-[0.98]"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>Open Official Document</span>

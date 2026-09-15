@@ -117,15 +117,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-6">
+    <div className="w-full max-w-md mx-auto px-1 sm:px-0">
+      <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
-            <Lock className="w-6 h-6 text-white" />
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
+            <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Student Portal Login</h2>
-          <p className="text-xs text-slate-400 max-w-xs mx-auto">
+          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Student Portal Login</h2>
+          <p className="text-[11px] sm:text-xs text-slate-400 max-w-xs mx-auto">
             Direct ephemeral connection to IMS NSIT. Your credentials are never stored.
           </p>
         </div>
@@ -151,7 +151,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               value={rollNumber}
               onChange={(e) => setRollNumber(e.target.value)}
               placeholder="e.g. 2024UCO1521"
-              className="w-full px-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 text-sm"
+              className="w-full px-4 py-3 sm:py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 text-base sm:text-sm"
             />
           </div>
 
@@ -167,7 +167,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="IMS Portal Password"
-              className="w-full px-4 py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 text-sm"
+              className="w-full px-4 py-3 sm:py-2.5 bg-slate-900/80 border border-white/10 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 text-base sm:text-sm"
             />
           </div>
 
@@ -179,9 +179,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 <button
                   type="button"
                   onClick={handleFetchFreshCaptcha}
-                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+                  className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors py-1 px-2 rounded-lg hover:bg-slate-800/60"
                 >
-                  <RefreshCw className="w-3 h-3" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                   <span>Reload Image</span>
                 </button>
               </div>
@@ -202,7 +202,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 value={captchaText}
                 onChange={(e) => setCaptchaText(e.target.value)}
                 placeholder="Enter characters from image"
-                className="w-full px-4 py-2.5 bg-slate-950 border border-brand-500/40 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-mono tracking-widest text-base font-bold uppercase"
+                className="w-full px-4 py-3 sm:py-2.5 bg-slate-950 border border-brand-500/40 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 text-center font-mono tracking-widest text-lg sm:text-base font-bold uppercase"
               />
             </div>
           )}
@@ -211,7 +211,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-500 hover:to-sky-400 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
+            className="w-full py-3.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-500 hover:to-sky-400 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group active:scale-[0.99]"
           >
             {loading ? (
               <>
