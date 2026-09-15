@@ -7,8 +7,8 @@ async function getWorker(): Promise<Tesseract.Worker> {
     workerPromise = (async () => {
       const worker = await createWorker('eng');
       await worker.setParameters({
-        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-        tessedit_pageseg_mode: '7' as any, // Single uniform text line
+        tessedit_char_whitelist: '0123456789',
+        tessedit_pageseg_mode: '11' as any, // PSM 11 (same as imsnsit_app)
       });
       return worker;
     })();
@@ -17,7 +17,7 @@ async function getWorker(): Promise<Tesseract.Worker> {
 }
 
 /**
- * Solves CAPTCHA image buffer using server-side Tesseract OCR
+ * Solves CAPTCHA image buffer using Tesseract OCR with psm:11 and digits-only whitelist
  */
 export async function solveCaptchaServer(imageBuffer: Buffer): Promise<string> {
   try {
@@ -26,7 +26,7 @@ export async function solveCaptchaServer(imageBuffer: Buffer): Promise<string> {
       data: { text },
     } = await worker.recognize(imageBuffer);
 
-    const cleaned = text.trim().replace(/[^a-zA-Z0-9]/g, '');
+    const cleaned = text.trim().replace(/[^0-9]/g, '');
     return cleaned;
   } catch (err) {
     console.error('[OCR Error]', err);

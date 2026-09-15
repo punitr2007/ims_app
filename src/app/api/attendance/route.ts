@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({
             success: false,
             error: authRes.error,
-            status: 'NEED_MANUAL_CAPTCHA',
+            status: authRes.status || 'NEED_MANUAL_CAPTCHA',
             captchaBase64: fresh.captchaBase64,
             sessionToken: newSessionToken,
           });
@@ -78,69 +78,77 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(attendanceData);
     }
 
-    // Case 1: One-shot Auto-solve flow
-    const client = new ImsClient();
-    let captchaData;
-    try {
-      captchaData = await client.getCaptchaAndTokens();
-    } catch (err: any) {
-      return NextResponse.json({
-        success: false,
-        error: 'IMS portal is temporarily busy or unreachable. Please try again.',
-        status: 'SERVER_ERROR',
-      });
-    }
+    // Case 1: One-shot Auto-solve flow (with auto-retry up to 2 attempts)
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const client = new ImsClient();
+      let captchaData;
+      try {
+        captchaData = await client.getCaptchaAndTokens();
+      } catch (err: any) {
+        if (attempt === 2) {
+          return NextResponse.json({
+            success: false,
+            error: 'IMS portal is temporarily busy or unreachable. Please try again.',
+            status: 'SERVER_ERROR',
+          });
+        }
+        continue;
+      }
 
-    const { captchaBase64, captchaBuffer, hrandNum, encFy, comp } = captchaData;
+      const { captchaBase64, captchaBuffer, hrandNum, encFy, comp } = captchaData;
 
-    let solvedOcr = '';
-    try {
-      solvedOcr = await solveCaptchaServer(captchaBuffer);
-      console.log(`[Auth] Auto-solved CAPTCHA: "${solvedOcr}"`);
-    } catch {
-      // OCR fail
-    }
+      let solvedOcr = '';
+      try {
+        solvedOcr = await solveCaptchaServer(captchaBuffer);
+        console.log(`[Auth Attempt ${attempt}] Auto-solved CAPTCHA: "${solvedOcr}"`);
+      } catch {
+        // OCR fail
+      }
 
-    let authSuccess = false;
-    if (solvedOcr.length >= 3) {
-      const authResult = await client.authenticate(rollNumber, password, solvedOcr, {
-        hrandNum,
-        encFy,
-        comp,
-      });
+      if (solvedOcr.length >= 4) {
+        const authResult = await client.authenticate(rollNumber, password, solvedOcr, {
+          hrandNum,
+          encFy,
+          comp,
+        });
 
-      if (authResult.success) {
-        authSuccess = true;
-      } else if (authResult.status === 'INVALID_CREDENTIALS') {
+        if (authResult.success) {
+          const attendanceData = await client.scrapeAttendance(rollNumber);
+          return NextResponse.json(attendanceData);
+        } else if (authResult.status === 'INVALID_CREDENTIALS') {
+          return NextResponse.json({
+            success: false,
+            error: authResult.error,
+            status: 'INVALID_CREDENTIALS',
+          });
+        }
+      }
+
+      // If this was attempt 2 or OCR had low confidence, prompt user with the fresh image
+      if (attempt === 2) {
+        const cookies = await client.jar.getCookies('https://www.imsnsit.org');
+        const newSessionToken = encodeSessionToken({
+          cookies: cookies.map((c) => c.toString()),
+          hrandNum,
+          encFy,
+          comp,
+          createdAt: Date.now(),
+        });
+
         return NextResponse.json({
           success: false,
-          error: authResult.error,
-          status: 'INVALID_CREDENTIALS',
+          error: 'Please enter the security verification code shown below.',
+          status: 'NEED_MANUAL_CAPTCHA',
+          captchaBase64,
+          sessionToken: newSessionToken,
         });
       }
     }
 
-    if (authSuccess) {
-      const attendanceData = await client.scrapeAttendance(rollNumber);
-      return NextResponse.json(attendanceData);
-    }
-
-    // If auto-solve did not succeed immediately, return the fresh CAPTCHA image for seamless 1-click manual entry
-    const cookies = await client.jar.getCookies('https://www.imsnsit.org');
-    const newSessionToken = encodeSessionToken({
-      cookies: cookies.map((c) => c.toString()),
-      hrandNum,
-      encFy,
-      comp,
-      createdAt: Date.now(),
-    });
-
     return NextResponse.json({
       success: false,
-      error: 'Please verify the security code shown below to view your attendance.',
-      status: 'NEED_MANUAL_CAPTCHA',
-      captchaBase64,
-      sessionToken: newSessionToken,
+      error: 'Could not connect to portal. Please try again.',
+      status: 'SERVER_ERROR',
     });
   } catch (err: any) {
     console.error('[API /api/attendance Error]', err);
