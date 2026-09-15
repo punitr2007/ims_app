@@ -1,0 +1,52 @@
+name: Sync IMS NSIT Notices
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      include_archive:
+        description: 'Scrape full archive as well'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  sync-notices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Scrape Notices
+        run: |
+          if [ "${{ inputs.include_archive }}" = "true" ]; then
+            npm run scrape:archive
+          else
+            npm run scrape:notices
+          fi
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/notices.json
+          if git diff --staged --quiet; then
+            echo "No new notices found. Nothing to commit."
+          else
+            git commit -m "chore(data): auto-sync notices [skip ci]"
+            git push
+          fi
