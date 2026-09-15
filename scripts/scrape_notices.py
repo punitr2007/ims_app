@@ -153,6 +153,16 @@ def main():
     with open(RECENT_NOTICES_FILE, 'w', encoding='utf-8') as f:
         json.dump(merged[:1500], f, separators=(',', ':'))
 
+    STATUS_FILE = os.path.join(DATA_DIR, 'last_sync_status.json')
+    status_data = {
+        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'totalCount': len(merged),
+        'newCount': new_count,
+        'latestNotices': merged[:3] if merged else []
+    }
+    with open(STATUS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(status_data, f, indent=2)
+
     print(f"[Python Scraper] Cleaned & saved {len(merged)} unique notices ({new_count} new live notices added).")
 
 if __name__ == '__main__':

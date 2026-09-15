@@ -2,8 +2,8 @@
 # ==============================================================================
 # IMS NSUT Notices — Dedicated Background Synchronization Worker
 # ==============================================================================
-# Target: Background Worker (Xiaomi Mi A2 / Termux / Cron / reTerminal)
-# Security: Unprivileged execution (No root/su required, purely OUTBOUND)
+# Target: Background Worker (Xiaomi Mi A2 / Termux / Tasker / Cron)
+# Security: Unprivileged execution (Purely outbound HTTP/Git)
 # Concurrency: Protected with flock file locking
 # ==============================================================================
 
@@ -30,7 +30,7 @@ log() {
 }
 
 # ------------------------------------------------------------------------------
-# 0. Concurrency Protection (Prevent overlapping cron runs)
+# 0. Concurrency Protection (Prevent overlapping runs)
 # ------------------------------------------------------------------------------
 exec 200>"$LOCK_FILE"
 if ! flock -n 200; then
@@ -51,24 +51,30 @@ git pull --rebase origin main || {
 }
 
 # ------------------------------------------------------------------------------
-# 2. Run Notice Scraper (Node / tsx)
+# 2. Run Notice Scraper & Indexer (Python 3 zero-dependency or Node tsx)
 # ------------------------------------------------------------------------------
 log "Step 2: Scraping live notices from IMS NSIT portal..."
-if command -v npx >/dev/null 2>&1; then
-  npx tsx scripts/scrape_notices.ts || log "Notice: Scraper exited with non-zero status."
-elif command -v python3 >/dev/null 2>&1 && [ -f "scripts/scrape_notices.py" ]; then
-  python3 scripts/scrape_notices.py || log "Notice: Python scraper exited with non-zero status."
+SCRAPE_SUCCESS=0
+if command -v python3 >/dev/null 2>&1 && [ -f "scripts/scrape_notices.py" ]; then
+  python3 scripts/scrape_notices.py && SCRAPE_SUCCESS=1 || log "Notice: Python scraper exited with non-zero status."
+elif command -v npx >/dev/null 2>&1 && [ -f "scripts/scrape_notices.ts" ]; then
+  npx tsx scripts/scrape_notices.ts && SCRAPE_SUCCESS=1 || log "Notice: Scraper exited with non-zero status."
 else
-  log "Error: Neither npx nor python3 available to execute scraper."
+  log "Error: Neither python3 nor npx available to execute scraper."
+  exit 1
+fi
+
+if [ $SCRAPE_SUCCESS -ne 1 ]; then
+  log "Error: Scraping step failed."
   exit 1
 fi
 
 # ------------------------------------------------------------------------------
-# 3. Check for updates and commit + push via scoped PAT
+# 3. Check for updates and commit + push to GitHub
 # ------------------------------------------------------------------------------
 if [[ -n $(git status --porcelain data/ public/data/) ]]; then
   log "Step 3: New notices detected. Committing and pushing to GitHub..."
-  git add data/notices.json public/data/notices-recent.json public/data/notices.json
+  git add data/notices.json data/last_sync_status.json public/data/notices-recent.json public/data/notices.json
   git commit -m "AutoSync: Update IMS NSUT notices catalog [$(date '+%Y-%m-%d %H:%M')]"
   git push origin main
   log "✓ Successfully pushed updated notices to GitHub!"
