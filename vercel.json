@@ -9,6 +9,14 @@
     "src/app/api/captcha/route.ts": {
       "maxDuration": 15,
       "memory": 512
+    },
+    "src/app/api/document/route.ts": {
+      "maxDuration": 15,
+      "memory": 512
+    },
+    "src/app/api/telegram/webhook/route.ts": {
+      "maxDuration": 15,
+      "memory": 512
     }
   }
 }
