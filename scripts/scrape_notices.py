@@ -102,6 +102,8 @@ def parse_html_notices(html: str):
                         'scrapedAt': now
                     })
                     
+    return notices
+
 def fetch_live_notices():
     req = urllib.request.Request(NOTIFICATIONS_URL, headers=HEADERS)
     for attempt in range(1, 4):
