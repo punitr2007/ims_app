@@ -7,24 +7,30 @@ import {
   NoticeItem,
 } from './telegram_notices';
 
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ims-app-pearl.vercel.app';
 
-const GRAPH_API_URL = `https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`;
+function getGraphApiUrl(): string {
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1285430617992852';
+  return `https://graph.facebook.com/v21.0/${phoneId}/messages`;
+}
+
+function getWhatsAppToken(): string {
+  return process.env.WHATSAPP_TOKEN || '';
+}
 
 /**
  * Send a simple text message via WhatsApp Cloud API
  */
 export async function sendWhatsAppText(to: string, text: string) {
-  if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
-    console.warn('[WhatsApp] WHATSAPP_TOKEN or WHATSAPP_PHONE_NUMBER_ID not configured.');
+  const token = getWhatsAppToken();
+  if (!token) {
+    console.warn('[WhatsApp] WHATSAPP_TOKEN not configured.');
     return;
   }
 
   try {
     await axios.post(
-      GRAPH_API_URL,
+      getGraphApiUrl(),
       {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
@@ -34,7 +40,7 @@ export async function sendWhatsAppText(to: string, text: string) {
       },
       {
         headers: {
-          Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       }
@@ -53,14 +59,15 @@ export async function sendWhatsAppDocument(
   filename: string,
   caption: string
 ) {
-  if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) return;
+  const token = getWhatsAppToken();
+  if (!token) return;
 
   // Use proxy URL to ensure Meta servers can fetch it without referer issues
   const proxiedPdfUrl = `${BASE_URL}/api/document?url=${encodeURIComponent(pdfUrl)}`;
 
   try {
     await axios.post(
-      GRAPH_API_URL,
+      getGraphApiUrl(),
       {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
@@ -74,7 +81,7 @@ export async function sendWhatsAppDocument(
       },
       {
         headers: {
-          Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       }
@@ -88,7 +95,8 @@ export async function sendWhatsAppDocument(
  * Send an Interactive List Menu for Category Selection
  */
 export async function sendWhatsAppCategoryMenu(to: string) {
-  if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) return;
+  const token = getWhatsAppToken();
+  if (!token) return;
 
   const payload = {
     messaging_product: 'whatsapp',
@@ -166,9 +174,9 @@ export async function sendWhatsAppCategoryMenu(to: string) {
   };
 
   try {
-    await axios.post(GRAPH_API_URL, payload, {
+    await axios.post(getGraphApiUrl(), payload, {
       headers: {
-        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
@@ -241,10 +249,13 @@ export async function sendWhatsAppNoticeList(
     },
   };
 
+  const token = getWhatsAppToken();
+  if (!token) return;
+
   try {
-    await axios.post(GRAPH_API_URL, payload, {
+    await axios.post(getGraphApiUrl(), payload, {
       headers: {
-        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
