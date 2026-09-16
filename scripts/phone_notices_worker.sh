@@ -22,18 +22,14 @@ if [ ! -d "$WORKSPACE_DIR" ]; then
 fi
 cd "$WORKSPACE_DIR"
 
+umask 002
+
 LOG_FILE="$WORKSPACE_DIR/.notices_worker.log"
-if [ -n "$PREFIX" ] && [ -d "$PREFIX/tmp" ]; then
-  TMP_DIR="$PREFIX/tmp"
-elif [ -n "$TMPDIR" ] && [ -w "$TMPDIR" ]; then
-  TMP_DIR="$TMPDIR"
-elif [ -d "/tmp" ] && [ -w "/tmp" ]; then
-  TMP_DIR="/tmp"
-else
-  TMP_DIR="$WORKSPACE_DIR/.tmp"
-fi
+TMP_DIR="$WORKSPACE_DIR/.tmp"
 mkdir -p "$TMP_DIR"
 LOCK_FILE="$TMP_DIR/ims_notices_sync.lock"
+touch "$LOCK_FILE" 2>/dev/null || true
+chmod 666 "$LOCK_FILE" 2>/dev/null || true
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
@@ -43,6 +39,7 @@ log() {
 # 0. Concurrency Protection (Prevent overlapping runs)
 # ------------------------------------------------------------------------------
 exec 200>"$LOCK_FILE"
+chmod 666 "$LOCK_FILE" 2>/dev/null || true
 if ! flock -n 200; then
   log "Notice: Another notices sync job is currently running. Exiting cleanly."
   exit 0
