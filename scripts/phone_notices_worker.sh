@@ -7,6 +7,15 @@
 # Concurrency: Protected with flock file locking & fetch-first commit age check
 # ==============================================================================
 
+# Ensure full Termux and Android environment paths are available
+if [ -d "/data/data/com.termux/files/usr/bin" ]; then
+  export PREFIX="/data/data/com.termux/files/usr"
+  export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin:$PATH"
+  export LD_LIBRARY_PATH="$PREFIX/lib"
+  export HOME="/data/data/com.termux/files/home"
+  export TERM="xterm-256color"
+fi
+
 set -eo pipefail
 
 WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
