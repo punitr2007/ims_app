@@ -8,7 +8,7 @@ import re
 import json
 import hashlib
 import urllib.request
-import urllib.parse
+import time
 from datetime import datetime, timezone
 
 NOTIFICATIONS_URL = 'https://www.imsnsit.org/imsnsit/notifications.php'
@@ -102,13 +102,19 @@ def parse_html_notices(html: str):
                         'scrapedAt': now
                     })
                     
-    return notices
-
 def fetch_live_notices():
     req = urllib.request.Request(NOTIFICATIONS_URL, headers=HEADERS)
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        html = resp.read().decode('utf-8', errors='ignore')
-    return parse_html_notices(html)
+    for attempt in range(1, 4):
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                html = resp.read().decode('utf-8', errors='ignore')
+            return parse_html_notices(html)
+        except Exception as e:
+            if attempt == 3:
+                print(f"[Warning] Failed to fetch live notices from portal: {e}")
+                return []
+            time.sleep(2)
+    return []
 
 def main():
     existing_notices = []
