@@ -60,13 +60,17 @@ if git fetch origin main 2>/dev/null; then
 
   if [[ "$1" != "--force" ]] && [ "$DIFF_MINUTES" -lt 40 ]; then
     log "✓ Remote catalog is already fresh (last sync ${DIFF_MINUTES}m ago by GHA). Skipping redundant scrape."
+    git stash 2>/dev/null || true
     git pull --rebase origin main 2>/dev/null || true
+    git stash pop 2>/dev/null || true
     log "========================================================"
     exit 0
   fi
   
   log "Remote commit age: ${DIFF_MINUTES}m (Proceeding with sync worker)..."
-  git pull --rebase origin main || true
+  git stash 2>/dev/null || true
+  git pull --rebase origin main 2>/dev/null || true
+  git stash pop 2>/dev/null || true
 else
   log "Warning: Git fetch failed or device is offline. Continuing with local files."
 fi
@@ -104,6 +108,7 @@ if [[ -n $(git status --porcelain data/ public/data/) ]]; then
   log "Step 3: New notices detected. Committing and pushing to GitHub..."
   git add data/notices.json data/last_sync_status.json public/data/notices-recent.json public/data/notices.json
   git commit -m "AutoSync: Update IMS NSUT notices catalog [$(date '+%Y-%m-%d %H:%M')]"
+  git pull --rebase origin main 2>/dev/null || true
   git push origin main
   log "✓ Successfully pushed updated notices to GitHub!"
 else
