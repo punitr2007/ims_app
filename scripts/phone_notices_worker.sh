@@ -8,15 +8,18 @@
 # ==============================================================================
 
 # Ensure full Termux and Android environment paths are available
-export PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+export PREFIX="/data/data/com.termux/files/usr"
+export HOME="/data/data/com.termux/files/home"
 export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin:$PATH"
 export LD_LIBRARY_PATH="$PREFIX/lib"
-export HOME="${HOME:-/data/data/com.termux/files/home}"
 export TERM="xterm-256color"
 
 set -eo pipefail
 
-WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKSPACE_DIR="${WORKSPACE_DIR:-/data/data/com.termux/files/home/ims_app}"
+if [ ! -d "$WORKSPACE_DIR" ]; then
+  WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)"
+fi
 cd "$WORKSPACE_DIR"
 
 LOG_FILE="$WORKSPACE_DIR/.notices_worker.log"
@@ -80,17 +83,15 @@ fi
 # ------------------------------------------------------------------------------
 log "Step 2: Scraping live notices from IMS NSIT portal..."
 SCRAPE_SUCCESS=0
-PYTHON_EXEC=""
-if [ -x "$PREFIX/bin/python3" ]; then
-  PYTHON_EXEC="$PREFIX/bin/python3"
-elif command -v python3 >/dev/null 2>&1; then
-  PYTHON_EXEC="$(command -v python3)"
+PYTHON_EXEC="$PREFIX/bin/python3"
+if [ ! -x "$PYTHON_EXEC" ]; then
+  PYTHON_EXEC="$(command -v python3 || true)"
 fi
 
-if [ -n "$PYTHON_EXEC" ] && [ -f "scripts/scrape_notices.py" ]; then
-  "$PYTHON_EXEC" scripts/scrape_notices.py && SCRAPE_SUCCESS=1 || log "Notice: Python scraper exited with non-zero status."
-elif command -v npx >/dev/null 2>&1 && [ -f "scripts/scrape_notices.ts" ]; then
-  npx tsx scripts/scrape_notices.ts && SCRAPE_SUCCESS=1 || log "Notice: Scraper exited with non-zero status."
+if [ -n "$PYTHON_EXEC" ] && [ -x "$PYTHON_EXEC" ] && [ -f "$WORKSPACE_DIR/scripts/scrape_notices.py" ]; then
+  "$PYTHON_EXEC" "$WORKSPACE_DIR/scripts/scrape_notices.py" && SCRAPE_SUCCESS=1 || log "Notice: Python scraper exited with non-zero status."
+elif command -v npx >/dev/null 2>&1 && [ -f "$WORKSPACE_DIR/scripts/scrape_notices.ts" ]; then
+  npx tsx "$WORKSPACE_DIR/scripts/scrape_notices.ts" && SCRAPE_SUCCESS=1 || log "Notice: Scraper exited with non-zero status."
 else
   log "Error: Neither python3 nor npx available to execute scraper."
   exit 1

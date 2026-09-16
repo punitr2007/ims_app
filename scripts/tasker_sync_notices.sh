@@ -10,12 +10,12 @@
 # ==============================================================================
 
 export PREFIX="/data/data/com.termux/files/usr"
+export HOME="/data/data/com.termux/files/home"
 export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin:$PATH"
 export LD_LIBRARY_PATH="$PREFIX/lib"
-export HOME="/data/data/com.termux/files/home"
 export TERM="xterm-256color"
 
-APP_DIR="$HOME/ims_app"
+APP_DIR="/data/data/com.termux/files/home/ims_app"
 STATUS_FILE="$APP_DIR/data/last_sync_status.json"
 
 # 1. Immediate visual & haptic feedback on launch
