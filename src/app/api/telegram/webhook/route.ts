@@ -3,8 +3,10 @@ import { generateWebAppToken, unbindAccount, getBoundRollNumber } from '@/lib/se
 import {
   getLatestNotices,
   findNoticeById,
-  searchNotices,
+  getCategorizedNotices,
+  searchCategorizedNotices,
   downloadNoticePdf,
+  CATEGORIES,
   NoticeItem,
 } from '@/lib/telegram_notices';
 
@@ -64,6 +66,30 @@ async function sendTelegramMessage(chatId: number | string, text: string, replyM
     });
   } catch (err) {
     console.error('[Telegram Webhook] Error sending message:', err);
+  }
+}
+
+async function editTelegramMessage(
+  chatId: number | string,
+  messageId: number,
+  text: string,
+  replyMarkup?: any
+) {
+  if (!BOT_TOKEN) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        text,
+        parse_mode: 'HTML',
+        reply_markup: replyMarkup,
+      }),
+    });
+  } catch (err) {
+    console.error('[Telegram Webhook] Error editing message:', err);
   }
 }
 
@@ -156,6 +182,134 @@ async function deliverNoticePdf(chatId: number | string, notice: NoticeItem) {
   await sendTelegramDocument(chatId, downloaded.buffer, filename, caption);
 }
 
+function buildNoticeCatalogView(
+  category = 'all',
+  page = 1,
+  onlyAttachments = false,
+  query = ''
+): { text: string; replyMarkup: any } {
+  const data = query
+    ? searchCategorizedNotices(query, category, page, 5, onlyAttachments)
+    : getCategorizedNotices(category, page, 5, onlyAttachments);
+
+  const activeCategoryObj = CATEGORIES.find((c) => c.id === category) || CATEGORIES[0];
+  const queryBadge = query ? `\n🔍 Search: <i>"${query}"</i>` : '';
+  const attachBadge = onlyAttachments ? ' [📎 Attachments Only]' : '';
+
+  let text =
+    `📢 <b>IMS NSUT Notices & Circulars</b>\n` +
+    `📂 <b>Category:</b> ${activeCategoryObj.emoji} <b>${activeCategoryObj.label}</b>${queryBadge}${attachBadge}\n` +
+    `📑 <b>Page:</b> ${data.page} of ${data.totalPages} (${data.total} circulars found)\n\n` +
+    `<i>Tap any PDF button to download the official circular document:</i>\n\n`;
+
+  if (data.items.length === 0) {
+    text += `<i>No notices match the selected category/filters. Try selecting "All Notices" or turning off the attachment filter.</i>\n\n`;
+  }
+
+  const keyboard: any[] = [];
+
+  // 1. PDF Download Buttons for each Notice
+  data.items.forEach((notice, idx) => {
+    const isExam = notice.department.toUpperCase().includes('EXAM') || notice.title.toUpperCase().includes('EXAM');
+    const badge = isExam ? '🚨' : '📌';
+    text += `${badge} <b>${(data.page - 1) * 5 + idx + 1}. ${notice.title}</b>\n`;
+    text += `📅 <code>${notice.publishedDate}</code> | 🏢 ${notice.department}\n\n`;
+
+    if (notice.attachmentUrl) {
+      keyboard.push([
+        {
+          text: `📄 Get PDF: ${notice.title.slice(0, 32)}...`,
+          callback_data: `pdf:${notice.id}`,
+        },
+      ]);
+    }
+  });
+
+  // 2. Pagination Navigation
+  const navRow: any[] = [];
+  const qParam = query ? `:${encodeURIComponent(query)}` : '';
+  const attachFlag = onlyAttachments ? 1 : 0;
+
+  if (data.page > 1) {
+    navRow.push({
+      text: '◀️ Prev',
+      callback_data: `view:${category}:${data.page - 1}:${attachFlag}${qParam}`,
+    });
+  }
+  navRow.push({
+    text: `📄 ${data.page}/${data.totalPages}`,
+    callback_data: 'noop',
+  });
+  if (data.page < data.totalPages) {
+    navRow.push({
+      text: 'Next ▶️',
+      callback_data: `view:${category}:${data.page + 1}:${attachFlag}${qParam}`,
+    });
+  }
+  keyboard.push(navRow);
+
+  // 3. Category Filter Tabs (Row 1)
+  const catRow1 = [
+    {
+      text: `${category === 'all' ? '✅ ' : ''}All`,
+      callback_data: `view:all:1:${attachFlag}${qParam}`,
+    },
+    {
+      text: `${category === 'exam' ? '✅ ' : ''}📝 Exams`,
+      callback_data: `view:exam:1:${attachFlag}${qParam}`,
+    },
+    {
+      text: `${category === 'hostel' ? '✅ ' : ''}🏠 Hostels`,
+      callback_data: `view:hostel:1:${attachFlag}${qParam}`,
+    },
+  ];
+  keyboard.push(catRow1);
+
+  // 4. Category Filter Tabs (Row 2)
+  const catRow2 = [
+    {
+      text: `${category === 'academic' ? '✅ ' : ''}🎓 Academics`,
+      callback_data: `view:academic:1:${attachFlag}${qParam}`,
+    },
+    {
+      text: `${category === 'placement' ? '✅ ' : ''}💼 Placements`,
+      callback_data: `view:placement:1:${attachFlag}${qParam}`,
+    },
+    {
+      text: `${category === 'sports' ? '✅ ' : ''}🏆 Sports`,
+      callback_data: `view:sports:1:${attachFlag}${qParam}`,
+    },
+  ];
+  keyboard.push(catRow2);
+
+  // 5. Attachment Filter Toggle & Quick Actions
+  const toggleFlag = onlyAttachments ? 0 : 1;
+  const toggleText = onlyAttachments ? '✅ 📎 Attachments Only' : '📎 Show All (Inc. Text)';
+  keyboard.push([
+    {
+      text: toggleText,
+      callback_data: `view:${category}:1:${toggleFlag}${qParam}`,
+    },
+    {
+      text: '⚡ Send Latest PDF',
+      callback_data: 'latest_pdf',
+    },
+  ]);
+
+  // 6. Web Portal Link
+  keyboard.push([
+    {
+      text: '🌐 Open Modern Web Portal',
+      url: BASE_URL,
+    },
+  ]);
+
+  return {
+    text,
+    replyMarkup: { inline_keyboard: keyboard },
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Verify Webhook Secret Token
@@ -168,15 +322,21 @@ export async function POST(req: NextRequest) {
 
     const update: TelegramUpdate = await req.json();
 
-    // 2. Handle Callback Queries (Inline Button Clicks)
+    // 2. Handle Callback Queries (Inline Button Clicks & Filter Tabs)
     if (update.callback_query) {
       const cb = update.callback_query;
       const data = cb.data || '';
       const chatId = cb.message?.chat.id || cb.from.id;
+      const messageId = cb.message?.message_id;
+
+      if (data === 'noop') {
+        await answerCallbackQuery(cb.id);
+        return NextResponse.json({ ok: true });
+      }
 
       if (data.startsWith('pdf:')) {
         const noticeId = data.slice(4);
-        await answerCallbackQuery(cb.id, '⏳ Fetching notice PDF from IMS...');
+        await answerCallbackQuery(cb.id, '⏳ Fetching notice PDF from IMS NSIT...');
         const notice = findNoticeById(noticeId);
         if (notice) {
           await deliverNoticePdf(chatId, notice);
@@ -195,11 +355,30 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
+      if (data.startsWith('view:')) {
+        // Format: view:<category>:<page>:<onlyAttachments>[:<query>]
+        const parts = data.split(':');
+        const cat = parts[1] || 'all';
+        const pageNum = parseInt(parts[2] || '1', 10);
+        const onlyAttach = parts[3] === '1';
+        const query = parts[4] ? decodeURIComponent(parts[4]) : '';
+
+        await answerCallbackQuery(cb.id);
+        const view = buildNoticeCatalogView(cat, pageNum, onlyAttach, query);
+
+        if (messageId) {
+          await editTelegramMessage(chatId, messageId, view.text, view.replyMarkup);
+        } else {
+          await sendTelegramMessage(chatId, view.text, view.replyMarkup);
+        }
+        return NextResponse.json({ ok: true });
+      }
+
       await answerCallbackQuery(cb.id);
       return NextResponse.json({ ok: true });
     }
 
-    // 3. Handle Regular Messages
+    // 3. Handle Regular Text Messages & Commands
     const message = update.message;
     if (!message || !message.text) {
       return NextResponse.json({ ok: true });
@@ -214,17 +393,53 @@ export async function POST(req: NextRequest) {
     if (text.startsWith('/start')) {
       const welcomeText =
         `👋 <b>Welcome to IMS NSUT Bot, ${userFirstName}!</b>\n\n` +
-        `Direct official circular PDFs, attendance analytics, and real-time student tools.\n\n` +
-        `<b>Available Commands:</b>\n` +
-        `• 📄 <b>/notices</b> — Browse latest circulars with 1-tap PDF downloads\n` +
-        `• ⚡ <b>/latest</b> — Send the newest official circular PDF directly to chat\n` +
-        `• 🔍 <b>/search &lt;query&gt;</b> — Search circulars (e.g. <code>/search exam</code>, <code>/search fee</code>)\n` +
-        `• 📊 <b>/attendance</b> — Check attendance & bunk limits via secure WebApp\n` +
+        `Direct official circular PDFs, categorized notices, attendance analytics, and real-time student tools.\n\n` +
+        `<b>📂 Notice Commands:</b>\n` +
+        `• 📄 <b>/notices</b> — Browse circulars with category tabs & 1-tap PDF downloads\n` +
+        `• 📝 <b>/exams</b> — View Exams, Datesheets & Seating Plans\n` +
+        `• 🏠 <b>/hostels</b> — View Hostel Allotments & Circulars\n` +
+        `• 🎓 <b>/academics</b> — View Academic notices & syllabus\n` +
+        `• 💼 <b>/placements</b> — View Training, Placement & Internships\n` +
+        `• ⚡ <b>/latest</b> — Send newest official circular PDF directly to chat\n` +
+        `• 🔍 <b>/search &lt;query&gt;</b> — Search circulars with category filters\n\n` +
+        `<b>📊 Attendance Commands:</b>\n` +
+        `• 📊 <b>/attendance</b> — Securely check attendance & bunk limits via WebApp\n` +
         `• 🔓 <b>/unbind</b> — Unlink previously stored roll number\n` +
         `• ℹ️ <b>/help</b> — Usage & privacy information\n\n` +
         `🔒 <i>Passwords never touch Telegram chat messages. Logins happen exclusively in the WebApp.</i>`;
 
       await sendTelegramMessage(chatId, welcomeText);
+      return NextResponse.json({ ok: true });
+    }
+
+    // Direct Category Commands
+    if (text.startsWith('/exam')) {
+      const view = buildNoticeCatalogView('exam', 1, false);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text.startsWith('/hostel')) {
+      const view = buildNoticeCatalogView('hostel', 1, false);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text.startsWith('/academic')) {
+      const view = buildNoticeCatalogView('academic', 1, false);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text.startsWith('/placement')) {
+      const view = buildNoticeCatalogView('placement', 1, false);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text.startsWith('/sport')) {
+      const view = buildNoticeCatalogView('sports', 1, false);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
       return NextResponse.json({ ok: true });
     }
 
@@ -252,74 +467,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
-      const results = searchNotices(query, 5);
-      if (results.length === 0) {
-        await sendTelegramMessage(
-          chatId,
-          `🔍 No circulars matching <i>"${query}"</i> were found in the archive.`
-        );
-        return NextResponse.json({ ok: true });
-      }
-
-      let responseText = `🔍 <b>Search Results for:</b> <i>"${query}"</i>\n\n`;
-      const keyboardButtons: any[] = [];
-
-      results.forEach((notice, idx) => {
-        responseText += `<b>${idx + 1}. ${notice.title}</b>\n`;
-        responseText += `📅 <code>${notice.publishedDate}</code> | 🏢 ${notice.department}\n\n`;
-        if (notice.attachmentUrl) {
-          keyboardButtons.push([
-            {
-              text: `📄 Get PDF #${idx + 1}`,
-              callback_data: `pdf:${notice.id}`,
-            },
-          ]);
-        }
-      });
-
-      keyboardButtons.push([{ text: '🌐 Search on Web Portal', url: `${BASE_URL}?q=${encodeURIComponent(query)}` }]);
-
-      await sendTelegramMessage(chatId, responseText, {
-        inline_keyboard: keyboardButtons,
-      });
+      const view = buildNoticeCatalogView('all', 1, false, query);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
       return NextResponse.json({ ok: true });
     }
 
     // Command: /notices
     if (text.startsWith('/notices')) {
-      const latestNotices = getLatestNotices(5);
-      const noticesUrl = BASE_URL;
-
-      let noticesText =
-        `📢 <b>Latest IMS NSUT Notices & Circulars</b>\n\n` +
-        `<i>Tap any button below to download the official PDF directly in Telegram:</i>\n\n`;
-
-      const keyboardButtons: any[] = [];
-
-      latestNotices.forEach((notice, idx) => {
-        const isHigh = notice.department.toUpperCase().includes('EXAM') || notice.title.toUpperCase().includes('EXAM');
-        const badge = isHigh ? '🚨' : '📌';
-        noticesText += `${badge} <b>${idx + 1}. ${notice.title}</b>\n`;
-        noticesText += `📅 <code>${notice.publishedDate}</code> | 🏢 ${notice.department}\n\n`;
-
-        if (notice.attachmentUrl) {
-          keyboardButtons.push([
-            {
-              text: `📄 Get PDF: ${notice.title.slice(0, 32)}...`,
-              callback_data: `pdf:${notice.id}`,
-            },
-          ]);
-        }
-      });
-
-      keyboardButtons.push([
-        { text: '⚡ Send Newest PDF Directly', callback_data: 'latest_pdf' },
-        { text: '🌐 Open Web Portal', url: noticesUrl },
-      ]);
-
-      await sendTelegramMessage(chatId, noticesText, {
-        inline_keyboard: keyboardButtons,
-      });
+      const view = buildNoticeCatalogView('all', 1, false);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
       return NextResponse.json({ ok: true });
     }
 
@@ -362,8 +518,10 @@ export async function POST(req: NextRequest) {
     if (text.startsWith('/help')) {
       const helpText =
         `ℹ️ <b>IMS NSUT Bot Help & Features</b>\n\n` +
+        `• <b>Category Tabs & Filters:</b> In /notices, tap category chips (Exams, Hostels, Academics, Placements, Sports) to instantly filter notices.\n` +
+        `• <b>Attachments Only Toggle:</b> Tap the 📎 button to show only notices with downloadable PDF attachments.\n` +
         `• <b>Direct PDF Delivery:</b> Tap any 📄 PDF button or send /latest to get circulars as native PDF document files.\n` +
-        `• <b>Search Circulars:</b> Use /search &lt;query&gt; (e.g. <code>/search timetable</code>) to find and download any past notice.\n` +
+        `• <b>Search Circulars:</b> Use /search &lt;query&gt; (e.g. <code>/search timetable</code>) to search across all archived circulars.\n` +
         `• <b>Attendance & Bunk Limits:</b> Use /attendance to calculate exact required or skippable classes for 75%.\n` +
         `• <b>Zero-Knowledge Security:</b> Passwords are never stored or logged and only exist in-memory during active sessions.\n\n` +
         `Support & Web Portal: <a href="${BASE_URL}">${BASE_URL}</a>`;

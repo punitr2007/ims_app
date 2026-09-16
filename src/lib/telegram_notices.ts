@@ -65,19 +65,138 @@ export function findNoticeById(id: string): NoticeItem | undefined {
   return all.find((n) => n.id === id);
 }
 
-export function searchNotices(query: string, limit = 5): NoticeItem[] {
+export const CATEGORIES = [
+  { id: 'all', label: 'All Notices', emoji: '📌' },
+  { id: 'exam', label: 'Exams & Datesheets', emoji: '📝' },
+  { id: 'hostel', label: 'Hostels', emoji: '🏠' },
+  { id: 'academic', label: 'Academics', emoji: '🎓' },
+  { id: 'placement', label: 'Placements', emoji: '💼' },
+  { id: 'sports', label: 'Sports & NSS', emoji: '🏆' },
+];
+
+export function filterNoticesByCategory(
+  notices: NoticeItem[],
+  category: string,
+  onlyAttachments = false
+): NoticeItem[] {
+  let result = notices;
+  if (onlyAttachments) {
+    result = result.filter((n) => !!n.attachmentUrl);
+  }
+
+  if (category === 'all') return result;
+
+  return result.filter((n) => {
+    const titleLower = n.title.toLowerCase();
+    const deptLower = n.department.toLowerCase();
+    const pubLower = n.publisher.toLowerCase();
+
+    if (category === 'hostel') {
+      return (
+        titleLower.includes('hostel') ||
+        deptLower.includes('hostel') ||
+        pubLower.includes('hostel') ||
+        titleLower.includes('ramanujan') ||
+        titleLower.includes('aryabhatta') ||
+        titleLower.includes('mess')
+      );
+    }
+    if (category === 'exam') {
+      return (
+        titleLower.includes('exam') ||
+        titleLower.includes('date sheet') ||
+        titleLower.includes('datesheet') ||
+        titleLower.includes('mid sem') ||
+        titleLower.includes('end sem') ||
+        titleLower.includes('seating plan') ||
+        titleLower.includes('seat plan') ||
+        titleLower.includes('reappear') ||
+        titleLower.includes('result') ||
+        deptLower.includes('exam')
+      );
+    }
+    if (category === 'academic') {
+      return (
+        titleLower.includes('academic') ||
+        titleLower.includes('syllabus') ||
+        titleLower.includes('course') ||
+        titleLower.includes('registration') ||
+        titleLower.includes('mentor') ||
+        titleLower.includes('attendance') ||
+        titleLower.includes('scholarship') ||
+        titleLower.includes('fee') ||
+        deptLower.includes('academic')
+      );
+    }
+    if (category === 'placement') {
+      return (
+        titleLower.includes('placement') ||
+        titleLower.includes('internship') ||
+        titleLower.includes('recruitment') ||
+        titleLower.includes('training') ||
+        titleLower.includes('drive') ||
+        deptLower.includes('training') ||
+        deptLower.includes('placement')
+      );
+    }
+    if (category === 'sports') {
+      return (
+        titleLower.includes('sports') ||
+        titleLower.includes('nss') ||
+        titleLower.includes('gymkhana') ||
+        titleLower.includes('cultural') ||
+        titleLower.includes('tournament') ||
+        deptLower.includes('sports')
+      );
+    }
+    return true;
+  });
+}
+
+export function getCategorizedNotices(
+  category = 'all',
+  page = 1,
+  pageSize = 5,
+  onlyAttachments = false
+): { items: NoticeItem[]; total: number; totalPages: number; page: number } {
+  const all = loadNotices();
+  const filtered = filterNoticesByCategory(all, category, onlyAttachments);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const items = filtered.slice(start, start + pageSize);
+
+  return { items, total, totalPages, page: currentPage };
+}
+
+export function searchCategorizedNotices(
+  query: string,
+  category = 'all',
+  page = 1,
+  pageSize = 5,
+  onlyAttachments = false
+): { items: NoticeItem[]; total: number; totalPages: number; page: number } {
   const all = loadNotices();
   const q = query.toLowerCase().trim();
-  if (!q) return all.slice(0, limit);
-
-  return all
-    .filter(
+  let matched = all;
+  if (q) {
+    matched = all.filter(
       (n) =>
         n.title.toLowerCase().includes(q) ||
         n.department.toLowerCase().includes(q) ||
         n.publisher.toLowerCase().includes(q)
-    )
-    .slice(0, limit);
+    );
+  }
+
+  const filtered = filterNoticesByCategory(matched, category, onlyAttachments);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const start = (currentPage - 1) * pageSize;
+  const items = filtered.slice(start, start + pageSize);
+
+  return { items, total, totalPages, page: currentPage };
 }
 
 export async function downloadNoticePdf(
