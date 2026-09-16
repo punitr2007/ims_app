@@ -37,7 +37,7 @@ if [ ! -d "$APP_DIR" ]; then
 fi
 
 # 3. Execute dedicated background sync worker
-"$PREFIX/bin/bash" "$APP_DIR/scripts/phone_notices_worker.sh"
+"$PREFIX/bin/bash" "$APP_DIR/scripts/phone_notices_worker.sh" "$@"
 EXIT_CODE=$?
 
 # 4. Process result & Notify User

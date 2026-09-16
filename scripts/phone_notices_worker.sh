@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/data/data/com.termux/files/usr/bin/bash
 # ==============================================================================
 # IMS NSUT Notices — Dedicated Background Synchronization Worker
 # ==============================================================================
@@ -8,13 +8,11 @@
 # ==============================================================================
 
 # Ensure full Termux and Android environment paths are available
-if [ -d "/data/data/com.termux/files/usr/bin" ]; then
-  export PREFIX="/data/data/com.termux/files/usr"
-  export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin:$PATH"
-  export LD_LIBRARY_PATH="$PREFIX/lib"
-  export HOME="/data/data/com.termux/files/home"
-  export TERM="xterm-256color"
-fi
+export PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+export PATH="$PREFIX/bin:$PREFIX/bin/applets:/system/bin:/system/xbin:$PATH"
+export LD_LIBRARY_PATH="$PREFIX/lib"
+export HOME="${HOME:-/data/data/com.termux/files/home}"
+export TERM="xterm-256color"
 
 set -eo pipefail
 
@@ -78,8 +76,15 @@ fi
 # ------------------------------------------------------------------------------
 log "Step 2: Scraping live notices from IMS NSIT portal..."
 SCRAPE_SUCCESS=0
-if command -v python3 >/dev/null 2>&1 && [ -f "scripts/scrape_notices.py" ]; then
-  python3 scripts/scrape_notices.py && SCRAPE_SUCCESS=1 || log "Notice: Python scraper exited with non-zero status."
+PYTHON_EXEC=""
+if [ -x "$PREFIX/bin/python3" ]; then
+  PYTHON_EXEC="$PREFIX/bin/python3"
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON_EXEC="$(command -v python3)"
+fi
+
+if [ -n "$PYTHON_EXEC" ] && [ -f "scripts/scrape_notices.py" ]; then
+  "$PYTHON_EXEC" scripts/scrape_notices.py && SCRAPE_SUCCESS=1 || log "Notice: Python scraper exited with non-zero status."
 elif command -v npx >/dev/null 2>&1 && [ -f "scripts/scrape_notices.ts" ]; then
   npx tsx scripts/scrape_notices.ts && SCRAPE_SUCCESS=1 || log "Notice: Scraper exited with non-zero status."
 else
