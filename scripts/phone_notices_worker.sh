@@ -4,7 +4,7 @@
 # ==============================================================================
 # Target: Background Worker (Xiaomi Mi A2 / Termux / Tasker / Cron)
 # Security: Unprivileged execution (Purely outbound HTTP/Git)
-# Concurrency: Protected with flock file locking
+# Concurrency: Protected with flock file locking & fetch-first commit age check
 # ==============================================================================
 
 set -eo pipefail
@@ -43,12 +43,26 @@ log "Starting IMS Notices Background Worker Run..."
 log "Working Directory: $WORKSPACE_DIR"
 
 # ------------------------------------------------------------------------------
-# 1. Pull latest git changes to stay in sync with host
+# 1. Fetch Remote & Guard Against Race Condition with GitHub Actions
 # ------------------------------------------------------------------------------
-log "Step 1: Pulling latest changes from GitHub..."
-git pull --rebase origin main || {
-  log "Warning: Git pull failed or device is offline. Continuing with local files."
-}
+log "Step 1: Fetching latest remote state from GitHub..."
+if git fetch origin main 2>/dev/null; then
+  LAST_REMOTE_COMMIT_TIME=$(git log -1 --format=%ct origin/main 2>/dev/null || echo 0)
+  CURRENT_TIME=$(date +%s)
+  DIFF_MINUTES=$(( (CURRENT_TIME - LAST_REMOTE_COMMIT_TIME) / 60 ))
+
+  if [[ "$1" != "--force" ]] && [ "$DIFF_MINUTES" -lt 40 ]; then
+    log "✓ Remote catalog is already fresh (last sync ${DIFF_MINUTES}m ago by GHA). Skipping redundant scrape."
+    git pull --rebase origin main 2>/dev/null || true
+    log "========================================================"
+    exit 0
+  fi
+  
+  log "Remote commit age: ${DIFF_MINUTES}m (Proceeding with sync worker)..."
+  git pull --rebase origin main || true
+else
+  log "Warning: Git fetch failed or device is offline. Continuing with local files."
+fi
 
 # ------------------------------------------------------------------------------
 # 2. Run Notice Scraper & Indexer (Python 3 zero-dependency or Node tsx)
