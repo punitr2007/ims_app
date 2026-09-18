@@ -21,6 +21,8 @@ export interface AttendanceSubject {
   status: 'safe' | 'warning' | 'danger';
   bunkableClasses: number;
   requiredClasses: number;
+  /** Per-day attendance data: { "01-Aug-2025": "P", "02-Aug-2025": "A", ... } */
+  dailyAttendance?: Record<string, string>;
 }
 
 export interface StudentProfile {
@@ -40,7 +42,7 @@ export interface AttendanceResponse {
   totalAttended?: number;
   lastUpdated?: string;
   error?: string;
-  status?: 'AUTHENTICATED' | 'WRONG_CAPTCHA' | 'INVALID_CREDENTIALS' | 'NEED_MANUAL_CAPTCHA' | 'SERVER_ERROR';
+  status?: 'AUTHENTICATED' | 'WRONG_CAPTCHA' | 'INVALID_CREDENTIALS' | 'NEED_MANUAL_CAPTCHA' | 'SERVER_ERROR' | 'RATE_LIMITED';
   captchaBase64?: string;
   sessionToken?: string;
 }
