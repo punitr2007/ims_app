@@ -11,6 +11,7 @@
     "scrape:archive": "tsx scripts/scrape_notices.ts --archive"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "axios": "^1.7.9",
     "axios-cookiejar-support": "^5.0.4",
     "cheerio": "^1.0.0",
