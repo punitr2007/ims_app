@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Navbar } from '@/components/layout/Navbar';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: 'IMS NSUT Modern Portal - Notices Search & Attendance Dashboard',
@@ -44,6 +45,7 @@ export default function RootLayout({
             Unofficial student-built interface for Netaji Subhas University of Technology (NSUT). All notices and portal data remain property of IMS NSIT.
           </p>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
