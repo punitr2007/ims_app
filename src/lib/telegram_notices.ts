@@ -170,6 +170,41 @@ export function getCategorizedNotices(
   return { items, total, totalPages, page: currentPage };
 }
 
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  if (Math.abs(a.length - b.length) > 2) return 999;
+
+  const bLen = b.length;
+  const aLen = a.length;
+  const row = new Array(aLen + 1);
+  for (let j = 0; j <= aLen; j++) row[j] = j;
+
+  for (let i = 1; i <= bLen; i++) {
+    let prev = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= aLen; j++) {
+      const temp = row[j];
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        row[j] = prev;
+      } else {
+        row[j] = Math.min(prev + 1, row[j] + 1, row[j - 1] + 1);
+      }
+      prev = temp;
+    }
+  }
+  return row[aLen];
+}
+
+function normalizeWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+}
+
 export function searchCategorizedNotices(
   query: string,
   category = 'all',
@@ -178,23 +213,113 @@ export function searchCategorizedNotices(
   onlyAttachments = false
 ): { items: NoticeItem[]; total: number; totalPages: number; page: number } {
   const all = loadNotices();
-  const q = query.toLowerCase().trim();
-  let matched = all;
-  if (q) {
-    matched = all.filter(
-      (n) =>
-        n.title.toLowerCase().includes(q) ||
-        n.department.toLowerCase().includes(q) ||
-        n.publisher.toLowerCase().includes(q)
-    );
+  const qRaw = query.trim().toLowerCase();
+
+  if (!qRaw) {
+    return getCategorizedNotices(category, page, pageSize, onlyAttachments);
   }
 
-  const filtered = filterNoticesByCategory(matched, category, onlyAttachments);
-  const total = filtered.length;
+  const queryTokens = normalizeWords(qRaw);
+  if (queryTokens.length === 0) {
+    return getCategorizedNotices(category, page, pageSize, onlyAttachments);
+  }
+
+  // Pre-filter by category & attachments first if applicable
+  const candidatePool = filterNoticesByCategory(all, category, onlyAttachments);
+
+  // Score candidate notices
+  const scoredItems: { notice: NoticeItem; score: number; index: number }[] = [];
+
+  for (let i = 0; i < candidatePool.length; i++) {
+    const notice = candidatePool[i];
+    const titleLower = notice.title.toLowerCase();
+    const deptLower = notice.department.toLowerCase();
+    const pubLower = notice.publisher.toLowerCase();
+
+    let score = 0;
+
+    // 1. Direct exact phrase match bonuses
+    if (titleLower.includes(qRaw)) {
+      score += 150;
+    } else if (deptLower.includes(qRaw) || pubLower.includes(qRaw)) {
+      score += 80;
+    }
+
+    const titleWords = normalizeWords(notice.title);
+    const deptWords = normalizeWords(notice.department);
+
+    let matchedTokensCount = 0;
+
+    for (const qToken of queryTokens) {
+      let tokenMatched = false;
+
+      // Check title words
+      for (const tWord of titleWords) {
+        if (tWord === qToken) {
+          score += 40;
+          tokenMatched = true;
+          break;
+        } else if (tWord.startsWith(qToken) || tWord.includes(qToken)) {
+          score += 20;
+          tokenMatched = true;
+          break;
+        } else if (qToken.length >= 4 && tWord.length >= 4) {
+          const dist = levenshtein(qToken, tWord);
+          const maxDist = qToken.length >= 7 ? 2 : 1;
+          if (dist <= maxDist) {
+            score += 15;
+            tokenMatched = true;
+            break;
+          }
+        }
+      }
+
+      // If not matched in title, check department words
+      if (!tokenMatched) {
+        for (const dWord of deptWords) {
+          if (dWord === qToken) {
+            score += 25;
+            tokenMatched = true;
+            break;
+          } else if (dWord.startsWith(qToken) || dWord.includes(qToken)) {
+            score += 12;
+            tokenMatched = true;
+            break;
+          }
+        }
+      }
+
+      if (tokenMatched) {
+        matchedTokensCount++;
+      }
+    }
+
+    // Reward notices matching ALL query tokens (even out of order)
+    if (matchedTokensCount === queryTokens.length) {
+      score += 60;
+    } else if (queryTokens.length > 1 && matchedTokensCount > 0) {
+      score += matchedTokensCount * 10;
+    }
+
+    if (score > 0) {
+      scoredItems.push({ notice, score, index: i });
+    }
+  }
+
+  // Sort by highest score first; tie-breaker: original index (recency)
+  scoredItems.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    return a.index - b.index;
+  });
+
+  const matched = scoredItems.map((s) => s.notice);
+  const total = matched.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
   const start = (currentPage - 1) * pageSize;
-  const items = filtered.slice(start, start + pageSize);
+  const items = matched.slice(start, start + pageSize);
 
   return { items, total, totalPages, page: currentPage };
 }

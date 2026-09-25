@@ -137,6 +137,14 @@ async function sendTelegramDocument(
   }
 }
 
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 function sanitizeFilename(title: string): string {
   const clean = title.replace(/[^a-zA-Z0-9_\- ]/g, '').trim().replace(/\s+/g, '_');
   return (clean.slice(0, 50) || 'ims_notice') + '.pdf';
@@ -146,7 +154,7 @@ async function deliverNoticePdf(chatId: number | string, notice: NoticeItem) {
   if (!notice.attachmentUrl) {
     await sendTelegramMessage(
       chatId,
-      `ℹ️ <b>${notice.title}</b>\n\nThis circular was published as text only without an attached PDF document.`
+      `ℹ️ <b>${escapeHtml(notice.title)}</b>\n\nThis circular was published as text only without an attached PDF document.`
     );
     return;
   }
@@ -154,7 +162,7 @@ async function deliverNoticePdf(chatId: number | string, notice: NoticeItem) {
   if (notice.isExternalLink && !notice.attachmentUrl.includes('imsnsit.org')) {
     await sendTelegramMessage(
       chatId,
-      `🔗 <b>${notice.title}</b>\n\n📅 <b>Date:</b> ${notice.publishedDate}\n🏢 <b>Dept:</b> ${notice.department}\n👤 <b>Publisher:</b> ${notice.publisher}\n\n<i>This notice links to an external form/document.</i>`,
+      `🔗 <b>${escapeHtml(notice.title)}</b>\n\n<blockquote expandable>📅 <b>Date:</b> ${escapeHtml(notice.publishedDate)}\n🏢 <b>Dept:</b> ${escapeHtml(notice.department)}\n👤 <b>Publisher:</b> ${escapeHtml(notice.publisher)}</blockquote>\n\n<i>This notice links to an external form/document.</i>`,
       {
         inline_keyboard: [[{ text: '🌐 Open External Link', url: notice.attachmentUrl }]],
       }
@@ -166,17 +174,19 @@ async function deliverNoticePdf(chatId: number | string, notice: NoticeItem) {
   if (!downloaded || downloaded.buffer.length === 0) {
     await sendTelegramMessage(
       chatId,
-      `⚠️ <b>Failed to fetch PDF</b>\n\nCould not retrieve PDF for: <i>${notice.title}</i>.\nYou can view it on the portal: <a href="${notice.attachmentUrl}">Direct Link</a>`
+      `⚠️ <b>Failed to fetch PDF</b>\n\nCould not retrieve PDF for: <i>${escapeHtml(notice.title)}</i>.\nYou can view it on the portal: <a href="${notice.attachmentUrl}">Direct Link</a>`
     );
     return;
   }
 
   const filename = sanitizeFilename(notice.title);
   const caption =
-    `📄 <b>${notice.title}</b>\n\n` +
-    `📅 <b>Date:</b> <code>${notice.publishedDate}</code>\n` +
-    `🏢 <b>Department:</b> ${notice.department}\n` +
-    `👤 <b>Publisher:</b> ${notice.publisher}\n\n` +
+    `📄 <b>${escapeHtml(notice.title)}</b>\n\n` +
+    `<blockquote expandable>` +
+    `📅 <b>Date:</b> <code>${escapeHtml(notice.publishedDate)}</code>\n` +
+    `🏢 <b>Department:</b> ${escapeHtml(notice.department)}\n` +
+    `👤 <b>Publisher:</b> ${escapeHtml(notice.publisher)}` +
+    `</blockquote>\n\n` +
     `🌐 <a href="${BASE_URL}">IMS NSUT Portal</a>`;
 
   await sendTelegramDocument(chatId, downloaded.buffer, filename, caption);
@@ -193,37 +203,58 @@ function buildNoticeCatalogView(
     : getCategorizedNotices(category, page, 5, onlyAttachments);
 
   const activeCategoryObj = CATEGORIES.find((c) => c.id === category) || CATEGORIES[0];
-  const queryBadge = query ? `\n🔍 Search: <i>"${query}"</i>` : '';
+  const queryBadge = query ? `\n🔍 Search: <i>"${escapeHtml(query)}"</i>` : '';
   const attachBadge = onlyAttachments ? ' [📎 Attachments Only]' : '';
 
   let text =
     `📢 <b>IMS NSUT Notices & Circulars</b>\n` +
-    `📂 <b>Category:</b> ${activeCategoryObj.emoji} <b>${activeCategoryObj.label}</b>${queryBadge}${attachBadge}\n` +
-    `📑 <b>Page:</b> ${data.page} of ${data.totalPages} (${data.total} circulars found)\n\n` +
-    `<i>Tap any PDF button to download the official circular document:</i>\n\n`;
-
-  if (data.items.length === 0) {
-    text += `<i>No notices match the selected category/filters. Try selecting "All Notices" or turning off the attachment filter.</i>\n\n`;
-  }
+    `📂 <b>Category:</b> ${activeCategoryObj.emoji} <b>${escapeHtml(activeCategoryObj.label)}</b>${queryBadge}${attachBadge}\n` +
+    `📑 <b>Page:</b> ${data.page} of ${data.totalPages} (${data.total} circulars found)\n\n`;
 
   const keyboard: any[] = [];
+  const pdfButtons: any[] = [];
 
-  // 1. PDF Download Buttons for each Notice
-  data.items.forEach((notice, idx) => {
-    const isExam = notice.department.toUpperCase().includes('EXAM') || notice.title.toUpperCase().includes('EXAM');
-    const badge = isExam ? '🚨' : '📌';
-    text += `${badge} <b>${(data.page - 1) * 5 + idx + 1}. ${notice.title}</b>\n`;
-    text += `📅 <code>${notice.publishedDate}</code> | 🏢 ${notice.department}\n\n`;
+  if (data.items.length === 0) {
+    text += `<blockquote expandable><i>No notices match the selected category/filters. Try selecting "All Notices" or turning off the attachment filter.</i></blockquote>\n\n`;
+  } else {
+    // Wrap entire page's notice list in Telegram's confined expandable blockquote
+    text += `<blockquote expandable>`;
+    data.items.forEach((notice, idx) => {
+      const itemNum = (data.page - 1) * 5 + idx + 1;
+      const isExam = notice.department.toUpperCase().includes('EXAM') || notice.title.toUpperCase().includes('EXAM');
+      const badge = isExam ? '🚨' : '📌';
+      const attachIcon = notice.attachmentUrl ? ' 📎' : '';
 
-    if (notice.attachmentUrl) {
-      keyboard.push([
-        {
-          text: `📄 Get PDF: ${notice.title.slice(0, 32)}...`,
+      text += `${badge} <b>${itemNum}. ${escapeHtml(notice.title)}</b>${attachIcon}\n`;
+      text += `📅 <code>${escapeHtml(notice.publishedDate)}</code> | 🏢 ${escapeHtml(notice.department)}`;
+      if (idx < data.items.length - 1) {
+        text += `\n\n`;
+      }
+
+      if (notice.attachmentUrl) {
+        pdfButtons.push({
+          text: `📥 PDF #${itemNum}`,
           callback_data: `pdf:${notice.id}`,
-        },
-      ]);
+        });
+      }
+    });
+    text += `</blockquote>\n\n`;
+    text += `<i>Tap any numbered PDF button below to download:</i>`;
+  }
+
+  // 1. PDF Download Buttons formatted in clean, non-truncated rows
+  if (pdfButtons.length > 0) {
+    if (pdfButtons.length <= 3) {
+      keyboard.push(pdfButtons);
+    } else if (pdfButtons.length === 4) {
+      keyboard.push(pdfButtons.slice(0, 2));
+      keyboard.push(pdfButtons.slice(2));
+    } else {
+      // 5 buttons: 3 on row 1, 2 on row 2
+      keyboard.push(pdfButtons.slice(0, 3));
+      keyboard.push(pdfButtons.slice(3));
     }
-  });
+  }
 
   // 2. Pagination Navigation
   const navRow: any[] = [];
@@ -282,7 +313,7 @@ function buildNoticeCatalogView(
   ];
   keyboard.push(catRow2);
 
-  // 5. Attachment Filter Toggle & Quick Actions
+  // 5. Attachment Filter Toggle & Fuzzy Search Action
   const toggleFlag = onlyAttachments ? 0 : 1;
   const toggleText = onlyAttachments ? '✅ 📎 Attachments Only' : '📎 Show All (Inc. Text)';
   keyboard.push([
@@ -291,8 +322,8 @@ function buildNoticeCatalogView(
       callback_data: `view:${category}:1:${toggleFlag}${qParam}`,
     },
     {
-      text: '⚡ Send Latest PDF',
-      callback_data: 'latest_pdf',
+      text: '🔍 Search Notices',
+      callback_data: 'search_prompt',
     },
   ]);
 
@@ -331,6 +362,33 @@ export async function POST(req: NextRequest) {
 
       if (data === 'noop') {
         await answerCallbackQuery(cb.id);
+        return NextResponse.json({ ok: true });
+      }
+
+      if (data === 'search_prompt') {
+        await answerCallbackQuery(cb.id);
+        const searchPromptMsg =
+          `🔍 <b>Fuzzy Search Across 10,000+ IMS Circulars</b>\n\n` +
+          `Search notices with keywords in any order, partial words, or typos:\n\n` +
+          `• Type <code>/search &lt;keywords&gt;</code> (e.g. <code>/search mid sem datesheet</code>)\n` +
+          `• Or simply send your keywords directly in this chat!\n\n` +
+          `<b>Popular quick searches:</b>\n` +
+          `• <code>/search btech 7th sem</code>\n` +
+          `• <code>/search hostel fee refund</code>\n` +
+          `• <code>/search seating plan exam</code>\n` +
+          `• <code>/search result summer 2026</code>`;
+
+        await sendTelegramMessage(chatId, searchPromptMsg, {
+          inline_keyboard: [
+            [
+              { text: '📝 Search Exams', callback_data: 'view:exam:1:0' },
+              { text: '🏠 Search Hostels', callback_data: 'view:hostel:1:0' },
+            ],
+            [
+              { text: '🔙 Back to All Notices', callback_data: 'view:all:1:0' },
+            ],
+          ],
+        });
         return NextResponse.json({ ok: true });
       }
 
@@ -530,10 +588,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Default fallback
+    // Natural search fallback: treat any freeform text as a fuzzy search query across notices!
+    if (!text.startsWith('/')) {
+      const view = buildNoticeCatalogView('all', 1, false, text);
+      await sendTelegramMessage(chatId, view.text, view.replyMarkup);
+      return NextResponse.json({ ok: true });
+    }
+
+    // Default fallback for unknown slash commands
     await sendTelegramMessage(
       chatId,
-      `Unrecognized command. Type /notices for circular PDFs or /attendance for attendance dashboard.`
+      `Unrecognized command. Type /notices for circulars, /search &lt;keywords&gt; for fuzzy search, or /attendance for attendance dashboard.`
     );
     return NextResponse.json({ ok: true });
   } catch (err: any) {
