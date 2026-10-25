@@ -501,7 +501,7 @@ export class ImsClient {
 
     // --- Parse attendance table (mirrors parseAttandanceData in reference app) ---
     // Subject codes are in the 3rd .plum_head row (index 2), all tds after the first
-    const plumHeadRows = $('html body div#myreport table.plum_fieldbig tbody tr.plum_head');
+    const plumHeadRows = $('div#myreport table.plum_fieldbig tr.plum_head');
     const subjectsList: string[] = [];
 
     if (plumHeadRows.length >= 3) {
@@ -509,7 +509,7 @@ export class ImsClient {
         .find('td')
         .each((i, td) => {
           if (i === 0) return; // skip label column
-          const code = $(td).text().trim();
+          const code = $(td).text().replace(/\u00a0/g, ' ').trim();
           if (code) subjectsList.push(code);
         });
     }
@@ -520,19 +520,26 @@ export class ImsClient {
       dailyData[code] = {};
     }
 
-    const allRows = $('html body div#myreport table.plum_fieldbig tbody tr');
+    const allRows = $('div#myreport table.plum_fieldbig tr');
     allRows.each((_, tr) => {
       // Only rows without a class attribute are data rows (daily rows)
       if (!$(tr).attr('class')) {
         const tds = $(tr).find('td');
         if (tds.length > 2) {
-          const day = $(tds[0]).text().trim();
+          const day = $(tds[0]).text().replace(/\u00a0/g, ' ').trim();
           tds.each((i, td) => {
             if (i === 0) return;
             const code = subjectsList[i - 1];
-            const val = $(td).text().trim();
+            const rawVal = $(td).find('input').val()?.toString() || $(td).text();
+            const val = rawVal.replace(/\u00a0/g, ' ').trim();
             if (code && val) {
-              dailyData[code][day] = val;
+              let uniqueDay = day;
+              let count = 1;
+              while (dailyData[code][uniqueDay]) {
+                count++;
+                uniqueDay = `${day} (L${count})`;
+              }
+              dailyData[code][uniqueDay] = val;
             }
           });
         }
