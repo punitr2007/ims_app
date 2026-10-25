@@ -569,16 +569,37 @@ export class ImsClient {
 
       let totalHeld = 0;
       let attended = 0;
+      let portalPercentage: number | null = null;
 
       for (const [k, v] of Object.entries(data)) {
-        const num = parseInt(v, 10);
-        if (!isNaN(num)) {
-          if (k.includes('held') || k.includes('total')) totalHeld = num;
-          if (k.includes('attend') || k.includes('present')) attended = num;
+        const cleanK = k.replace(/\s+/g, ' ').trim().toLowerCase();
+        const num = parseFloat(v.replace('%', '').trim());
+
+        if (cleanK.includes('class') || cleanK.includes('held') || cleanK.includes('total')) {
+          if (!isNaN(num)) totalHeld = Math.round(num);
+        } else if (cleanK.includes('present') || cleanK.includes('attend')) {
+          if (!isNaN(num)) attended = Math.round(num);
+        } else if (cleanK.includes('%') || cleanK.includes('percent')) {
+          if (!isNaN(num)) portalPercentage = num;
         }
       }
 
-      const { percentage, status, bunkableClasses, requiredClasses } = calculateSubjectBunks(attended, totalHeld);
+      // If totalHeld is 0 but daily records exist, fallback to daily count
+      if (totalHeld === 0 && Object.keys(daily).length > 0) {
+        totalHeld = Object.keys(daily).length;
+        attended = Object.values(daily).filter(v => v.includes('1') || v.toUpperCase() === 'P').length;
+      }
+
+      let percentage = 0;
+      if (totalHeld > 0) {
+        percentage = portalPercentage !== null
+          ? Math.round(portalPercentage * 10) / 10
+          : Math.round((attended / totalHeld) * 1000) / 10;
+      } else if (portalPercentage !== null) {
+        percentage = Math.round(portalPercentage * 10) / 10;
+      }
+
+      const { status, bunkableClasses, requiredClasses } = calculateSubjectBunks(attended, totalHeld, 75);
 
       subjects.push({
         subjectCode: code,
@@ -587,9 +608,9 @@ export class ImsClient {
         totalHeld,
         attended,
         percentage,
-        status,
-        bunkableClasses,
-        requiredClasses,
+        status: totalHeld === 0 ? 'safe' : status,
+        bunkableClasses: totalHeld === 0 ? 0 : bunkableClasses,
+        requiredClasses: totalHeld === 0 ? 0 : requiredClasses,
         dailyAttendance: daily,
       });
     }

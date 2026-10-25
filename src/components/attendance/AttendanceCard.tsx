@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AttendanceSubject } from '@/lib/ims/types';
+import { calculateSubjectBunks } from '@/lib/ims/calculator';
 import { BookOpen, CheckCircle, AlertTriangle, ChevronDown, ChevronUp, CalendarDays } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -11,15 +12,22 @@ interface AttendanceCardProps {
 }
 
 export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCardProps) {
-  const isSafe = subject.status === 'safe';
-  const isWarning = subject.status === 'warning';
-  const isDanger = subject.status === 'danger';
   const [showDaily, setShowDaily] = useState(false);
 
   const dailyEntries = Object.entries(subject.dailyAttendance || {});
-  // P = Present, A = Absent, anything else is a holiday/cancelled class
-  const presentDays = dailyEntries.filter(([, v]) => v === 'P').length;
-  const absentDays = dailyEntries.filter(([, v]) => v === 'A').length;
+  // Matches '1' or 'P' for present; '0' or 'A' for absent (including '0+CR', '1+CR')
+  const presentDays = dailyEntries.filter(([, v]) => v.includes('1') || v.toUpperCase() === 'P').length;
+  const absentDays = dailyEntries.filter(([, v]) => v.includes('0') || v.toUpperCase() === 'A').length;
+
+  const { bunkableClasses, requiredClasses, status } = calculateSubjectBunks(
+    subject.attended,
+    subject.totalHeld,
+    targetPercentage
+  );
+
+  const isSafe = subject.totalHeld === 0 ? true : status === 'safe';
+  const isWarning = subject.totalHeld > 0 && status === 'warning';
+  const isDanger = subject.totalHeld > 0 && status === 'danger';
 
   return (
     <div className="glass-panel rounded-2xl border border-white/5 hover:border-white/10 transition-all overflow-hidden">
@@ -97,12 +105,17 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
               : 'bg-rose-950/40 text-rose-300 border border-rose-800/40'
           )}
         >
-          {isSafe ? (
+          {subject.totalHeld === 0 ? (
+            <>
+              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>No classes scheduled or recorded yet for this course.</span>
+            </>
+          ) : isSafe ? (
             <>
               <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>
-                {subject.bunkableClasses > 0 ? (
-                  <>You can safely bunk the next <strong className="underline decoration-emerald-500 font-bold">{subject.bunkableClasses}</strong> classes and stay above {targetPercentage}%.</>
+                {bunkableClasses > 0 ? (
+                  <>You can safely bunk the next <strong className="underline decoration-emerald-500 font-bold">{bunkableClasses}</strong> classes and stay above {targetPercentage}%.</>
                 ) : (
                   <>You are right on the {targetPercentage}% margin. Don&apos;t miss the next class!</>
                 )}
@@ -112,7 +125,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
             <>
               <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
               <span>
-                Must attend next <strong className="underline decoration-rose-500 font-bold">{subject.requiredClasses}</strong> consecutive classes to reach {targetPercentage}%.
+                Must attend next <strong className="underline decoration-rose-500 font-bold">{requiredClasses}</strong> consecutive classes to reach {targetPercentage}%.
               </span>
             </>
           )}
@@ -141,8 +154,8 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
         <div className="border-t border-white/5 px-5 pb-4 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto">
             {dailyEntries.map(([day, val]) => {
-              const isPresent = val === 'P';
-              const isAbsent = val === 'A';
+              const isPresent = val.includes('1') || val.toUpperCase() === 'P';
+              const isAbsent = val.includes('0') || val.toUpperCase() === 'A';
               return (
                 <div
                   key={day}
