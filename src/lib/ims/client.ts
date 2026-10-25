@@ -104,20 +104,29 @@ export class ImsClient {
     fy: string;
     t: string;
   }> {
-    // Step 1: Hit student_login110.php to establish session cookies
-    await this.client.get(LOGIN_INIT_URL, {
+    // Step 0: Hit BASE_URL (https://www.imsnsit.org/imsnsit/) to establish root session cookies
+    await this.client.get(BASE_URL, {
+      headers: { Referer: 'https://www.imsnsit.org/' },
+    });
+
+    // Step 1: Hit student_login110.php (establishes student session & redirects to student_login.php)
+    const initRes = await this.client.get(LOGIN_INIT_URL, {
       headers: {
         Referer: BASE_URL,
         'Sec-Fetch-User': '?1',
       },
     });
 
-    // Step 2: Load student_login.php to get CAPTCHA src and HRAND_NUM
-    const loginRes = await this.client.get(LOGIN_PAGE_URL, {
-      headers: { Referer: LOGIN_INIT_URL },
-    });
+    // Step 2: Ensure we load student_login.php data with CAPTCHA and tokens
+    let loginData = initRes.data || '';
+    if (typeof loginData !== 'string' || !loginData.includes('captchaimg')) {
+      const loginRes = await this.client.get(LOGIN_PAGE_URL, {
+        headers: { Referer: LOGIN_INIT_URL },
+      });
+      loginData = loginRes.data || '';
+    }
 
-    const $ = cheerio.load(loginRes.data || '');
+    const $ = cheerio.load(loginData);
 
     // Extract HRAND_NUM (critical – must not be empty)
     const hrand =
