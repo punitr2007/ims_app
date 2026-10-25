@@ -9,9 +9,11 @@ export async function GET() {
 
     const cookies = await ims.jar.getCookies('https://www.imsnsit.org');
     const cookieStrings = cookies.map((c) => c.toString());
+    const serializedJar = await ims.jar.serialize();
 
     const sessionToken = encodeSessionToken({
       cookies: cookieStrings,
+      serializedJar,
       hrandNum,
       encFy,
       comp,

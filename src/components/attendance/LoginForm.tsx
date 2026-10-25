@@ -91,7 +91,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          rollNumber: rollNumber.trim().toUpperCase(),
+          rollNumber: rollNumber.trim(),
           password,
           captchaText: captchaText.trim(),
           sessionToken,

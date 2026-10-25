@@ -135,6 +135,8 @@ export class ImsClient {
       $('input[name="comp"]').attr('value') ||
       'NETAJI SUBHAS UNIVERSITY OF TECHNOLOGY';
     const fyVal =
+      $('#fy').attr('value') ||
+      $('input[name="fy"]').attr('value') ||
       $('#fy option:selected').attr('value') ||
       $('#fy option').eq(1).attr('value') ||
       getFinancialYear();
@@ -195,15 +197,16 @@ export class ImsClient {
     const comp = overrideTokens?.comp ?? this.comp;
     const fy = overrideTokens?.fy ?? this.fy ?? getFinancialYear();
 
-    // POST body mirrors exactly what the reference Flutter app sends
+    // POST body mirrors exactly what the reference Flutter app and web portal send
     const postData = new URLSearchParams({
       f: '',
-      uid,
+      uid: uid.trim(),
       pwd,
       HRAND_NUM: hrand,
       fy,
       comp,
       cap: captchaText.trim(),
+      login: 'Login',
       logintype: 'student',
     });
 
@@ -232,6 +235,8 @@ export class ImsClient {
         return { success: false, error: 'Wrong CAPTCHA. Please try again.', status: 'WRONG_CAPTCHA' };
       }
       if (
+        loginResult.includes('Invalid Login') ||
+        loginResult.includes('Invalid login') ||
         loginResult.includes('Invalid password') ||
         loginResult.includes('Your password does not match') ||
         loginResult.includes('not authorised') ||
@@ -258,6 +263,7 @@ export class ImsClient {
     }
 
     if (
+      errorTextLower.includes('invalid login') ||
       errorTextLower.includes('invalid password') ||
       errorTextLower.includes('not authorised') ||
       errorTextLower.includes('not authorized') ||
@@ -463,7 +469,7 @@ export class ImsClient {
 
     // Step 3: POST attendance form (mirrors reference app exactly)
     const postData = new URLSearchParams({
-      year: getFinancialYear(),
+      year: this.fy || getFinancialYear(),
       enc_year: encYear,
       sem: this.semester || '1',
       enc_sem: encSem,

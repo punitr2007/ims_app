@@ -4,6 +4,7 @@ const SECRET_KEY = process.env.SESSION_SECRET || 'ims-session-stateless-secret-k
 
 export interface SessionPayload {
   cookies: string[];
+  serializedJar?: any;
   hrandNum: string;
   encFy?: string;
   comp?: string;

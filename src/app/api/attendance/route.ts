@@ -43,11 +43,18 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const jar = new CookieJar();
-      for (const cStr of decoded.cookies) {
-        const cookie = Cookie.parse(cStr);
-        if (cookie) {
-          await jar.setCookie(cookie, 'https://www.imsnsit.org');
+      let jar: CookieJar;
+      if (decoded.serializedJar) {
+        jar = await CookieJar.deserialize(decoded.serializedJar);
+      } else {
+        jar = new CookieJar();
+        if (decoded.cookies) {
+          for (const cStr of decoded.cookies) {
+            const cookie = Cookie.parse(cStr);
+            if (cookie) {
+              await jar.setCookie(cookie, 'https://www.imsnsit.org');
+            }
+          }
         }
       }
 
@@ -75,8 +82,10 @@ export async function POST(req: NextRequest) {
           const freshClient = new ImsClient();
           const fresh = await freshClient.getCaptchaAndTokens();
           const cookies = await freshClient.jar.getCookies('https://www.imsnsit.org');
+          const freshSerialized = await freshClient.jar.serialize();
           const newSessionToken = encodeSessionToken({
             cookies: cookies.map((c) => c.toString()),
+            serializedJar: freshSerialized,
             hrandNum: fresh.hrandNum,
             encFy: fresh.encFy,
             comp: fresh.comp,
@@ -131,8 +140,10 @@ export async function POST(req: NextRequest) {
     }
 
     const cookies = await client.jar.getCookies('https://www.imsnsit.org');
+    const freshSerialized = await client.jar.serialize();
     const newSessionToken = encodeSessionToken({
       cookies: cookies.map((c) => c.toString()),
+      serializedJar: freshSerialized,
       hrandNum: fresh.hrandNum,
       encFy: fresh.encFy,
       comp: fresh.comp,
