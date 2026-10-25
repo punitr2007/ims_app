@@ -46,20 +46,20 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-brand-500/20 text-brand-400 border border-brand-500/30">
+            <div className="p-2 rounded-2xl bg-brand-500/15 text-brand-400 border border-brand-500/25">
               <GraduationCap className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Attendance & Bunk Calculator
+              Attendance & Bunk Calc
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Instant attendance analysis, safe bunk limits, and recovery planning for NSUT students.
+          <p className="text-[11px] sm:text-xs text-slate-400 mt-1">
+            Real-time IMS sync, safe bunk calculator, and what-if simulation for NSUT students.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function AttendancePage() {
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 text-xs font-medium transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 text-xs font-medium transition-all active:scale-95"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Log Out</span>
@@ -77,30 +77,30 @@ export default function AttendancePage() {
       </div>
 
       {!attendance ? (
-        <div className="py-6">
+        <div className="py-4 sm:py-6">
           <LoginForm onSuccess={handleLoginSuccess} />
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Profile Card */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Student Profile Card (Mobile Optimized) */}
           {attendance.profile && (
-            <div className="glass-panel p-5 sm:p-6 rounded-3xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-brand-500/20">
+            <div className="glass-panel p-4 sm:p-5 rounded-3xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shadow-xl">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center font-bold text-base sm:text-lg text-white shadow-lg shadow-brand-500/20 shrink-0">
                   {attendance.profile.name.charAt(0) || 'S'}
                 </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-bold text-white">
+                <div className="min-w-0">
+                  <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">
                     {attendance.profile.name}
                   </h2>
-                  <p className="text-xs text-slate-400 font-mono">
+                  <p className="text-[11px] sm:text-xs text-slate-400 font-mono truncate">
                     {attendance.profile.rollNumber} • {attendance.profile.program} (Sem {attendance.profile.semester})
                   </p>
                 </div>
               </div>
 
               {attendance.lastUpdated && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-400 bg-slate-900/70 px-3 py-1.5 rounded-xl border border-white/5 self-start sm:self-auto">
                   <Clock className="w-3.5 h-3.5 text-brand-400" />
                   <span>Synced {new Date(attendance.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
@@ -119,18 +119,18 @@ export default function AttendancePage() {
           />
 
           {/* Subjects Grid */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-brand-400" />
-                <h3 className="font-bold text-white text-base">Course-wise Attendance</h3>
+                <h3 className="font-bold text-white text-sm sm:text-base">Course-wise Attendance</h3>
               </div>
-              <span className="text-xs text-slate-400">
-                {attendance.subjects?.length || 0} Courses Enrolled
+              <span className="text-[11px] sm:text-xs font-mono text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded-full border border-white/5">
+                {attendance.subjects?.length || 0} Courses
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
               {attendance.subjects?.map((subject) => (
                 <AttendanceCard
                   key={subject.subjectCode}

@@ -125,20 +125,22 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
       : 0;
 
   return (
-    <div className="glass-panel rounded-2xl border border-white/5 hover:border-white/10 transition-all overflow-hidden flex flex-col justify-between">
-      <div className="p-5 space-y-4">
+    <div className="glass-panel rounded-3xl border border-white/5 hover:border-white/10 transition-all overflow-hidden flex flex-col justify-between shadow-xl">
+      <div className="p-4 sm:p-5.5 space-y-3.5 sm:space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2.5">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-md bg-brand-500/15 text-brand-300 font-mono text-xs font-semibold">
+              <span className="px-2 py-0.5 rounded-md bg-brand-500/15 text-brand-300 font-mono text-[11px] sm:text-xs font-bold border border-brand-500/20">
                 {subject.subjectCode}
               </span>
               {subject.credits && (
-                <span className="text-[11px] text-slate-400">{subject.credits} Credits</span>
+                <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
+                  {subject.credits} Credits
+                </span>
               )}
             </div>
-            <h4 className="font-semibold text-white text-sm sm:text-base leading-snug">
+            <h4 className="font-bold text-white text-sm sm:text-base leading-snug tracking-tight">
               {subject.subjectName}
             </h4>
           </div>
@@ -157,7 +159,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
             </div>
             <span
               className={clsx(
-                'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5',
+                'text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5',
                 isSafe && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
                 isWarning && 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
                 isDanger && 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
@@ -170,18 +172,18 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
 
         {/* Progress Bar */}
         <div className="space-y-1.5">
-          <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+          <div className="w-full h-2 sm:h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-white/5">
             <div
               className={clsx(
                 'h-full rounded-full transition-all duration-500',
-                isSafe && 'bg-gradient-to-r from-emerald-500 to-teal-400',
-                isWarning && 'bg-gradient-to-r from-amber-500 to-yellow-400',
-                isDanger && 'bg-gradient-to-r from-rose-600 to-rose-400'
+                isSafe && 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/30',
+                isWarning && 'bg-gradient-to-r from-amber-500 to-yellow-400 shadow-sm shadow-amber-500/30',
+                isDanger && 'bg-gradient-to-r from-rose-600 to-rose-400 shadow-sm shadow-rose-500/30'
               )}
               style={{ width: `${Math.min(subject.percentage, 100)}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-400 font-medium">
             <span>
               Attended: <strong className="text-slate-200">{subject.attended}</strong> /{' '}
               {subject.totalHeld} classes
@@ -190,10 +192,10 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
           </div>
         </div>
 
-        {/* Bunk / Recovery Insight (mirrors reference imsnsit app) */}
+        {/* Bunk / Recovery Insight Ribbon (mirrors reference imsnsit app) */}
         <div
           className={clsx(
-            'p-3 rounded-xl text-xs flex items-center gap-2.5 font-medium',
+            'p-3 rounded-2xl text-[11px] sm:text-xs flex items-center gap-2.5 font-medium leading-relaxed',
             isSafe
               ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40'
               : isWarning
@@ -216,7 +218,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                     <strong className="underline decoration-emerald-500 font-bold">
                       {bunkableClasses}
                     </strong>{' '}
-                    classes and stay above {targetPercentage}%.
+                    classes without going below {targetPercentage}%.
                   </>
                 ) : (
                   <>You are right on the {targetPercentage}% margin. Don&apos;t miss the next class!</>
@@ -239,7 +241,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
 
         {/* Interactive Skip Classes Simulator */}
         {subject.totalHeld > 0 && (
-          <div className="p-3.5 rounded-xl bg-slate-900/80 border border-white/5 space-y-3">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
                 <Calculator className="w-3.5 h-3.5 text-brand-400" />
@@ -256,17 +258,18 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
               )}
             </div>
 
-            {/* Stepper & Dropdown Controls */}
+            {/* Stepper & Dropdown Controls (Mobile Touch Optimized) */}
             <div className="flex items-center gap-2">
               {/* Stepper Minus */}
               <button
                 type="button"
                 onClick={() => setSimulatedBunks((prev) => Math.max(0, prev - 1))}
                 disabled={simulatedBunks === 0}
-                className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 disabled:opacity-40 disabled:hover:bg-slate-800/80 flex items-center justify-center text-slate-200 transition-colors border border-white/5"
+                className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 disabled:opacity-30 flex items-center justify-center text-slate-200 transition-all border border-white/5 shrink-0"
                 title="Decrease skipped classes"
+                aria-label="Decrease skipped classes"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
               </button>
 
               {/* Number display / select dropdown */}
@@ -274,7 +277,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                 <select
                   value={simulatedBunks}
                   onChange={(e) => setSimulatedBunks(Number(e.target.value))}
-                  className="w-full bg-slate-950/80 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-brand-500 appearance-none cursor-pointer"
+                  className="w-full bg-slate-950/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-brand-500 appearance-none cursor-pointer"
                 >
                   <option value={0}>0 classes (Current)</option>
                   {Array.from({ length: Math.max(10, bunkableClasses + 4) }, (_, i) => i + 1).map(
@@ -286,17 +289,18 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                     )
                   )}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Stepper Plus */}
               <button
                 type="button"
                 onClick={() => setSimulatedBunks((prev) => prev + 1)}
-                className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 flex items-center justify-center text-slate-200 transition-colors border border-white/5"
+                className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 flex items-center justify-center text-slate-200 transition-all border border-white/5 shrink-0"
                 title="Increase skipped classes"
+                aria-label="Increase skipped classes"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
               </button>
 
               {/* Reset Button */}
@@ -304,8 +308,9 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                 <button
                   type="button"
                   onClick={() => setSimulatedBunks(0)}
-                  className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-colors border border-white/5"
+                  className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 active:scale-90 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-all border border-white/5 shrink-0"
                   title="Reset to 0"
+                  aria-label="Reset skipped count"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
@@ -314,14 +319,14 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
 
             {/* Quick-Preset Chips */}
             <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-              <span className="text-slate-500 text-[10px]">Quick:</span>
+              <span className="text-slate-500 text-[10px] font-medium">Quick:</span>
               {[1, 2, 3].map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setSimulatedBunks(n)}
                   className={clsx(
-                    'px-2 py-0.5 rounded-md font-mono font-medium transition-all border',
+                    'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
                     simulatedBunks === n
                       ? 'bg-brand-500/25 text-brand-300 border-brand-500/50'
                       : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border-white/5'
@@ -335,7 +340,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                   type="button"
                   onClick={() => setSimulatedBunks(bunkableClasses)}
                   className={clsx(
-                    'px-2 py-0.5 rounded-md font-mono font-medium transition-all border',
+                    'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
                     simulatedBunks === bunkableClasses
                       ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50'
                       : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
@@ -350,12 +355,12 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
             {simulatedBunks > 0 && (
               <div
                 className={clsx(
-                  'p-2.5 rounded-lg border text-xs space-y-1.5 animate-in fade-in duration-150',
+                  'p-2.5 sm:p-3 rounded-xl border text-xs space-y-1.5 animate-in fade-in duration-150',
                   simIsSafe
-                    ? 'bg-emerald-950/30 border-emerald-800/40 text-emerald-200'
+                    ? 'bg-emerald-950/35 border-emerald-800/40 text-emerald-200'
                     : simIsWarning
-                    ? 'bg-amber-950/30 border-amber-800/40 text-amber-200'
-                    : 'bg-rose-950/30 border-rose-800/40 text-rose-200'
+                    ? 'bg-amber-950/35 border-amber-800/40 text-amber-200'
+                    : 'bg-rose-950/35 border-rose-800/40 text-rose-200'
                 )}
               >
                 <div className="flex items-center justify-between font-mono font-semibold">
@@ -378,17 +383,17 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                   </div>
                   <span
                     className={clsx(
-                      'text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
-                      simIsSafe && 'bg-emerald-500/20 text-emerald-300',
-                      simIsWarning && 'bg-amber-500/20 text-amber-300',
-                      simIsDanger && 'bg-rose-500/20 text-rose-300'
+                      'text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full',
+                      simIsSafe && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+                      simIsWarning && 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+                      simIsDanger && 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                     )}
                   >
                     {simIsSafe ? 'Safe' : simIsWarning ? 'Margin' : 'Shortage'}
                   </span>
                 </div>
 
-                <p className="text-[11px] leading-tight opacity-90">
+                <p className="text-[11px] leading-relaxed opacity-90">
                   {simIsSafe ? (
                     remainingSafeBunks > 0 ? (
                       <>
@@ -420,29 +425,29 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
         {/* Daily Attendance Toggle */}
         <button
           onClick={() => setShowDaily((p) => !p)}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all text-xs text-slate-400 hover:text-slate-200"
+          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-white/10 active:scale-[0.99] transition-all text-xs text-slate-300 hover:text-white"
         >
-          <div className="flex items-center gap-1.5">
-            <CalendarDays className="w-3.5 h-3.5 text-brand-400" />
-            <span>
-              Daily View — <span className="text-emerald-400 font-semibold">{presentDays}P</span> /{' '}
-              <span className="text-rose-400 font-semibold">{absentDays}A</span>{' '}
-              <span className="text-slate-500">({totalClassesCount} classes)</span>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-brand-400" />
+            <span className="font-medium">
+              Daily Records — <span className="text-emerald-400 font-bold">{presentDays}P</span> /{' '}
+              <span className="text-rose-400 font-bold">{absentDays}A</span>{' '}
+              <span className="text-slate-500 font-normal">({totalClassesCount} lectures)</span>
             </span>
           </div>
           {showDaily ? (
-            <ChevronUp className="w-3.5 h-3.5" />
+            <ChevronUp className="w-4 h-4 text-slate-400" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDown className="w-4 h-4 text-slate-400" />
           )}
         </button>
       </div>
 
-      {/* Daily Attendance Grid (expandable) */}
+      {/* Daily Attendance Grid (Flutter-inspired Day Cards) */}
       {showDaily && (
-        <div className="border-t border-white/5 px-5 pb-4 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="border-t border-white/5 px-4 sm:px-5 pb-4 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
           {dailyEntries.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-6 md:grid-cols-7 gap-1.5 sm:gap-2 max-h-56 overflow-y-auto pr-1">
               {dailyEntries.map(([day, val]) => {
                 const { isPresent, isAbsent } = parseAttendanceStatus(val);
                 const displayVal = isPresent
@@ -460,20 +465,23 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                     key={day}
                     title={`${day}: ${val}`}
                     className={clsx(
-                      'px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono border transition-colors',
-                      isPresent && 'bg-emerald-950/60 border-emerald-700/40 text-emerald-300',
-                      isAbsent && 'bg-rose-950/60 border-rose-700/40 text-rose-300',
+                      'flex flex-col items-center justify-between p-2 rounded-xl border text-center transition-all',
+                      isPresent &&
+                        'bg-emerald-950/40 border-emerald-800/40 text-emerald-200 shadow-sm shadow-emerald-950/50',
+                      isAbsent &&
+                        'bg-rose-950/40 border-rose-800/40 text-rose-200 shadow-sm shadow-rose-950/50',
                       !isPresent && !isAbsent && 'bg-slate-900/60 border-white/5 text-slate-400'
                     )}
                   >
-                    <span className="text-slate-400">{day.replace(/^0/, '')}:</span>{' '}
+                    <span className="text-[10px] text-slate-400 font-mono leading-tight truncate w-full">
+                      {day.replace(/^0/, '')}
+                    </span>
                     <span
                       className={clsx(
-                        isPresent
-                          ? 'text-emerald-300 font-bold'
-                          : isAbsent
-                          ? 'text-rose-300 font-bold'
-                          : 'text-slate-300'
+                        'text-xs font-black font-mono mt-1 px-1.5 py-0.5 rounded-md',
+                        isPresent && 'bg-emerald-500/20 text-emerald-300',
+                        isAbsent && 'bg-rose-500/20 text-rose-300',
+                        !isPresent && !isAbsent && 'bg-slate-800 text-slate-400'
                       )}
                     >
                       {displayVal}

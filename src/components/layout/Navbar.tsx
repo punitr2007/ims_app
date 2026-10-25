@@ -72,8 +72,8 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Mobile Floating Bottom Navigation Bar */}
-      <nav className="sm:hidden fixed bottom-3 left-3 right-3 z-50 glass-panel bg-slate-950/90 backdrop-blur-xl border border-white/15 rounded-2xl p-1.5 shadow-2xl shadow-black/80 flex items-center justify-around">
+      {/* Mobile Floating Bottom Navigation Dock */}
+      <nav className="sm:hidden fixed bottom-3 left-3 right-3 max-w-md mx-auto z-50 glass-panel bg-slate-950/85 backdrop-blur-2xl border border-white/15 rounded-2xl p-1.5 shadow-2xl shadow-black/90 flex items-center justify-around pb-[max(0.375rem,env(safe-area-inset-bottom))]">
         {links.map(({ href, shortLabel, icon: Icon }) => {
           const isActive = pathname === href;
           return (
@@ -81,14 +81,14 @@ export function Navbar() {
               key={href}
               href={href}
               className={clsx(
-                'flex-1 flex flex-col items-center justify-center py-2 px-3 rounded-xl text-xs font-semibold transition-all gap-1 active:scale-95',
+                'flex-1 flex flex-col items-center justify-center py-2 px-3 rounded-xl text-xs font-semibold transition-all gap-1 active:scale-90',
                 isActive
-                  ? 'bg-gradient-to-r from-brand-600 to-sky-600 text-white shadow-lg shadow-brand-500/25'
+                  ? 'bg-gradient-to-r from-brand-600 to-sky-500 text-white shadow-lg shadow-brand-500/30'
                   : 'text-slate-400 hover:text-slate-200'
               )}
             >
-              <Icon className={clsx('w-4 h-4', isActive ? 'text-white' : 'text-slate-400')} />
-              <span className="text-[11px] leading-none">{shortLabel}</span>
+              <Icon className={clsx('w-4 h-4 transition-transform', isActive && 'scale-110 text-white')} />
+              <span className="text-[11px] font-medium leading-none tracking-tight">{shortLabel}</span>
             </Link>
           );
         })}

@@ -16,7 +16,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#030712',
+  viewportFit: 'cover',
+  themeColor: '#060913',
   colorScheme: 'dark',
 };
 
@@ -30,17 +31,17 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="dark" />
         <meta name="darkreader-lock" content="" />
-        <meta name="theme-color" content="#030712" />
+        <meta name="theme-color" content="#060913" />
       </head>
-      <body className="antialiased min-h-screen flex flex-col justify-between pb-20 md:pb-0" suppressHydrationWarning>
+      <body className="antialiased min-h-screen flex flex-col justify-between pb-28 sm:pb-8 selection:bg-brand-500/30 selection:text-white" suppressHydrationWarning>
         <div>
           <Navbar />
-          <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+          <main className="max-w-7xl mx-auto px-3.5 sm:px-6 py-3.5 sm:py-8">
             {children}
           </main>
         </div>
 
-        <footer className="border-t border-white/5 py-6 px-4 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full mb-14 md:mb-0">
+        <footer className="border-t border-white/5 py-6 px-4 text-center text-[11px] sm:text-xs text-slate-500 max-w-7xl mx-auto w-full mb-16 sm:mb-0">
           <p>
             Unofficial student-built interface for Netaji Subhas University of Technology (NSUT). All notices and portal data remain property of IMS NSIT.
           </p>
