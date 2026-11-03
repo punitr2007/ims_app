@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: sync-notices-main
+  cancel-in-progress: false
+
 jobs:
   sync-notices:
     runs-on: ubuntu-latest
@@ -48,5 +52,15 @@ jobs:
             echo "No new notices found. Nothing to commit."
           else
             git commit -m "AutoSync: Update IMS NSUT notices catalog [$(date '+%Y-%m-%d %H:%M UTC')] [skip ci]"
-            git push
+            for attempt in 1 2 3; do
+              if git push; then
+                exit 0
+              fi
+              if [ "$attempt" -lt 3 ]; then
+                echo "Push failed (attempt $attempt/3); retrying in $((attempt * 10)) seconds..."
+                sleep $((attempt * 10))
+              fi
+            done
+            echo "Unable to push changes after 3 attempts."
+            exit 1
           fi
