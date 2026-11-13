@@ -150,30 +150,34 @@ export default function NoticesPage() {
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Hero Search Section */}
-      <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-6 relative overflow-hidden">
+        {/* Subtle decorative ambient gradient blobs */}
+        <div className="absolute -top-20 -right-20 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-brand-500/20 text-brand-400 border border-brand-500/30">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-blue-500/20 text-sky-400 border border-sky-500/30 shadow-inner">
                 <Bell className="w-5 h-5" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Notices & Circulars Explorer
+              <h1 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Notices &amp; Circulars Explorer
               </h1>
             </div>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Search all current and archived NSUT official circulars, datesheets, and notifications with instant filtering.
+            <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed max-w-2xl">
+              Search all current and archived NSUT official circulars, exam datesheets, hostel notifications, and academic orders with instant fuzzy matching.
             </p>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {fullLoaded ? (
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium">
+              <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-semibold shadow-sm shadow-emerald-500/15">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>All {notices.length.toLocaleString()} Indexed</span>
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 text-xs font-medium">
+              <span className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 text-xs font-semibold">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Indexing Archive...</span>
               </span>

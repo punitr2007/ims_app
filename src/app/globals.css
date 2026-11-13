@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,9 +6,9 @@
 
 :root {
   color-scheme: dark;
-  --background: #060913;
+  --background: #030712;
   --foreground: #f8fafc;
-  --card-bg: rgba(15, 23, 42, 0.78);
+  --card-bg: rgba(15, 23, 42, 0.72);
   --card-border: rgba(255, 255, 255, 0.08);
 }
 
@@ -20,34 +20,47 @@ body {
   color: var(--foreground);
   background-color: var(--background);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.15) 0px, transparent 45%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.10) 0px, transparent 40%),
-    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(14, 165, 233, 0.18), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 90% 15%, rgba(99, 102, 241, 0.12), transparent 60%),
+    radial-gradient(ellipse 50% 50% at 10% 40%, rgba(56, 189, 248, 0.08), transparent 50%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(16, 185, 129, 0.06), transparent 70%);
   background-attachment: fixed;
   min-height: 100vh;
-  font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  letter-spacing: -0.01em;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.015em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism utilities with mobile-native blur */
+/* Subtle architectural dot grid overlay for ambient depth */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glassmorphism utilities with bevel specular highlight */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 32px 0 rgba(0, 0, 0, 0.45);
 }
 
 .glass-panel-hover {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-panel-hover:hover {
-  background: rgba(30, 41, 59, 0.85);
+  background: rgba(30, 41, 59, 0.82);
   border-color: rgba(56, 189, 248, 0.35);
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15), 0 16px 36px -8px rgba(0, 0, 0, 0.6), 0 0 20px -5px rgba(14, 165, 233, 0.15);
 }
 
 /* Mobile Touch Tap Feedback */
@@ -61,13 +74,12 @@ button, a {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #030712;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgba(56, 189, 248, 0.4);
 }
-
