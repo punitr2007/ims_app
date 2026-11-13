@@ -55,13 +55,50 @@ const FULL_MONTHS: Record<string, string> = {
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const MONTH_MAP: Record<string, number> = {
+  jan: 1, january: 1,
+  feb: 2, february: 2,
+  mar: 3, march: 3,
+  apr: 4, april: 4,
+  may: 5,
+  jun: 6, june: 6,
+  jul: 7, july: 7,
+  aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9,
+  oct: 10, october: 10,
+  nov: 11, november: 11,
+  dec: 12, december: 12,
+};
+
+/**
+ * Calculates day of the week using Zeller's Congruence (Modulo-7 arithmetic):
+ * h = (q + floor(13*(m+1)/5) + K + floor(K/4) + floor(J/4) - 2*J) mod 7
+ * where January and February are treated as months 13 and 14 of the preceding year.
+ * Returns: 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+ */
+export function getZellerDayOfWeek(day: number, month1Indexed: number, year: number): string {
+  let m = month1Indexed;
+  let y = year;
+  if (m < 3) {
+    m += 12;
+    y -= 1;
+  }
+  const q = day;
+  const K = y % 100;
+  const J = Math.floor(y / 100);
+  const rawH = (q + Math.floor((13 * (m + 1)) / 5) + K + Math.floor(K / 4) + Math.floor(J / 4) - 2 * J) % 7;
+  const h = (rawH + 7) % 7;
+  const zellerDays = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  return zellerDays[h];
+}
+
 /**
  * Parses a raw date string from IMS NSUT into structured date components.
- * Examples:
- * - "24-09-2026"
- * - "24/09/2026 (L2)"
- * - "01-Sep-2026"
- * - "05-Aug"
+ * Supports:
+ * - "Jul-28", "Aug-03", "Sep-09" (Month-Day)
+ * - "28-Jul", "03-Aug" (Day-Month)
+ * - "24-09-2026", "24/09/2026 (L2)" (Day-Month-Year)
+ * - "2026-07-28" (ISO)
  */
 function parseImsDate(rawDate: string, index: number): {
   cleanDate: string;
@@ -81,49 +118,77 @@ function parseImsDate(rawDate: string, index: number): {
     datePart = datePart.replace(/\((L\d+)\)/i, '').trim();
   }
 
-  // Common separators: "-" or "/" or "."
-  const parts = datePart.split(/[-/.]/);
+  // Common separators: "-", "/", ".", or spaces
+  const parts = datePart.split(/[-/.\s]+/).filter(Boolean);
 
   let day = 1;
-  let month = 0; // 0-indexed
+  let month = 7; // default July
   let year = 2026;
   let parsedSuccessfully = false;
 
   if (parts.length >= 2) {
-    const p0 = parseInt(parts[0], 10);
-    const p1 = parts[1].trim();
-    const p2 = parts[2] ? parseInt(parts[2], 10) : 2026;
+    const p0 = parts[0].trim().toLowerCase();
+    const p1 = parts[1].trim().toLowerCase();
+    const p2 = parts[2] ? parts[2].trim() : undefined;
 
-    if (!isNaN(p0) && p0 >= 1 && p0 <= 31) {
-      day = p0;
+    // Check if parts[0] is month name (e.g., 'Jul-28')
+    const m0 = MONTH_MAP[p0.slice(0, 3)] || MONTH_MAP[p0];
+    // Check if parts[1] is month name (e.g., '28-Jul')
+    const m1 = MONTH_MAP[p1.slice(0, 3)] || MONTH_MAP[p1];
 
-      // Check if second part is a month name (e.g., "Sep", "Aug")
-      const monthIdx = MONTH_NAMES.findIndex(
-        (m) => m.toLowerCase() === p1.slice(0, 3).toLowerCase()
-      );
-
-      if (monthIdx !== -1) {
-        month = monthIdx;
-        year = !isNaN(p2) ? (p2 < 100 ? 2000 + p2 : p2) : 2026;
-        parsedSuccessfully = true;
-      } else {
-        const numMonth = parseInt(p1, 10);
-        if (!isNaN(numMonth) && numMonth >= 1 && numMonth <= 12) {
-          month = numMonth - 1;
-          year = !isNaN(p2) ? (p2 < 100 ? 2000 + p2 : p2) : 2026;
-          parsedSuccessfully = true;
-        }
+    if (m0 && !isNaN(parseInt(p1, 10))) {
+      month = m0;
+      day = parseInt(p1, 10);
+      if (p2 && !isNaN(parseInt(p2, 10))) {
+        const yVal = parseInt(p2, 10);
+        year = yVal < 100 ? 2000 + yVal : yVal;
       }
+      parsedSuccessfully = true;
+    } else if (m1 && !isNaN(parseInt(p0, 10))) {
+      day = parseInt(p0, 10);
+      month = m1;
+      if (p2 && !isNaN(parseInt(p2, 10))) {
+        const yVal = parseInt(p2, 10);
+        year = yVal < 100 ? 2000 + yVal : yVal;
+      }
+      parsedSuccessfully = true;
+    } else if (!isNaN(parseInt(p0, 10)) && !isNaN(parseInt(p1, 10))) {
+      const n0 = parseInt(p0, 10);
+      const n1 = parseInt(p1, 10);
+      const n2 = p2 ? parseInt(p2, 10) : 2026;
+
+      if (n0 > 1000) {
+        // YYYY-MM-DD
+        year = n0;
+        month = n1;
+        day = n2;
+      } else if (n0 > 12) {
+        // DD-MM-YYYY
+        day = n0;
+        month = n1;
+        year = n2 < 100 ? 2000 + n2 : n2;
+      } else if (n1 > 12) {
+        // MM-DD-YYYY
+        month = n0;
+        day = n1;
+        year = n2 < 100 ? 2000 + n2 : n2;
+      } else {
+        // Default DD-MM
+        day = n0;
+        month = n1;
+        year = n2 < 100 ? 2000 + n2 : n2;
+      }
+      parsedSuccessfully = true;
     }
   }
 
-  if (parsedSuccessfully) {
-    const d = new Date(year, month, day);
-    const dayOfWeek = DAY_NAMES[d.getDay()] || 'Class Day';
-    const monthShort = MONTH_NAMES[month];
+  if (parsedSuccessfully && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+    const dayOfWeek = getZellerDayOfWeek(day, month, year);
+    const monthShort = MONTH_NAMES[month - 1];
     const dayPad = day < 10 ? `0${day}` : `${day}`;
     const formattedDate = `${dayPad} ${monthShort} ${year}`;
     const monthName = FULL_MONTHS[monthShort.toLowerCase()] || monthShort;
+    const d = new Date(year, month - 1, day);
 
     return {
       cleanDate: datePart,
@@ -139,7 +204,7 @@ function parseImsDate(rawDate: string, index: number): {
   return {
     cleanDate: rawDate,
     formattedDate: rawDate,
-    dayOfWeek: 'Lecture',
+    dayOfWeek: 'Class Day',
     monthName: 'Semester',
     lectureSlot,
     timestamp: Date.now() - index * 86400000,
@@ -436,18 +501,22 @@ export function DailyAttendanceView({
                   </div>
 
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-white text-xs tracking-tight">
-                        {item.formattedDate}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-white text-xs sm:text-sm tracking-tight">
+                        {item.cleanDate}
+                      </span>
+                      {/* Day of the week alongside the date */}
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-brand-500/15 text-brand-300 border border-brand-500/25">
+                        {item.dayOfWeek}
                       </span>
                       {item.lectureSlot && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-slate-800 text-brand-300 font-semibold border border-brand-500/20">
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 font-semibold border border-white/10">
                           {item.lectureSlot}
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-slate-400 block truncate">
-                      {item.dayOfWeek}
+                    <span className="text-[11px] text-slate-400 block truncate mt-0.5">
+                      {item.formattedDate} • {item.lectureSlot ? `Lecture Slot (${item.lectureSlot})` : 'Scheduled Lecture Session'}
                     </span>
                   </div>
                 </div>
@@ -514,7 +583,7 @@ export function DailyAttendanceView({
                 </div>
 
                 <div className="flex items-center justify-between pt-0.5">
-                  <span className="text-[10px] text-slate-400 truncate">
+                  <span className="text-[10px] text-brand-300 font-semibold truncate">
                     {item.dayOfWeek.slice(0, 3)}
                   </span>
                   <span
