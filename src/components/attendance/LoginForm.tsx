@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AttendanceResponse } from '@/lib/ims/types';
 import { Lock, User, KeyRound, Loader2, AlertTriangle, RefreshCw, Sparkles, ShieldCheck, Eye, EyeOff, X } from 'lucide-react';
+import { AppLogo } from '../brand/AppLogo';
 
 interface LoginFormProps {
   onSuccess: (data: AttendanceResponse) => void;
@@ -203,8 +204,8 @@ export function LoginForm({ onSuccess, initialRollNumber, isModal, onCancel }: L
               <X className="w-4 h-4" />
             </button>
           )}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
-            <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="flex items-center justify-center mx-auto mb-1">
+            <AppLogo size={46} showGlow={true} />
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
             {isModal ? 'Sync Fresh IMS Data' : 'Student Portal Login'}

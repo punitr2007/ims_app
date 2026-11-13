@@ -6,6 +6,7 @@ import { AttendanceResponse } from '@/lib/ims/types';
 import { LoginForm } from '@/components/attendance/LoginForm';
 import { AttendanceCard } from '@/components/attendance/AttendanceCard';
 import { BunkCalculator } from '@/components/attendance/BunkCalculator';
+import { AppLogo } from '@/components/brand/AppLogo';
 import { Shield, Sparkles, AlertCircle, ArrowLeft, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 function TelegramAuthContent() {
@@ -41,14 +42,12 @@ function TelegramAuthContent() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 flex flex-col justify-between max-w-lg mx-auto">
       {/* Top Header */}
       <header className="flex items-center justify-between py-3 border-b border-white/10 mb-6">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center shadow-md shadow-brand-500/20">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <AppLogo size={32} showGlow={true} />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
               <span>IMS NSUT</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-brand-500/20 text-brand-300 font-mono">WebApp</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-[var(--brand-from,#84cc16)]/20 text-[var(--brand-from,#84cc16)] font-mono">WebApp</span>
             </h1>
             <p className="text-[10px] text-slate-400">Direct Ephemeral Attendance</p>
           </div>

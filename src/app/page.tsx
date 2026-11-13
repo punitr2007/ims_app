@@ -296,7 +296,7 @@ export default function NoticesPage() {
               type="button"
               onClick={() => handleSyncLiveNotices(true)}
               disabled={isLiveSyncing}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-semibold shadow-md shadow-sky-500/25 transition-all active:scale-95 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--brand-from,#84cc16)] to-[var(--brand-to,#06b6d4)] hover:brightness-110 text-slate-950 text-xs font-bold shadow-md shadow-[var(--brand-from)]/25 transition-all active:scale-95 disabled:opacity-50"
               title="Check official IMS NSUT website for circulars published in the last few minutes"
             >
               <RefreshCw className={clsx('w-3.5 h-3.5', isLiveSyncing && 'animate-spin')} />

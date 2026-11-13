@@ -154,7 +154,7 @@ export function BunkCalculator({
           <div className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Overall Attendance</div>
           <div
             className={clsx(
-              'text-lg xs:text-xl sm:text-2xl font-black font-mono tracking-tight flex items-baseline gap-1',
+              'text-lg xs:text-xl sm:text-2xl font-black font-mono tracking-tight flex items-baseline gap-1 privacy-blur',
               (hasActiveSim ? simOverallPct : overallPercentage) >= target
                 ? 'text-emerald-400'
                 : (hasActiveSim ? simOverallPct : overallPercentage) >= target - 5

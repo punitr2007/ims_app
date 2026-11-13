@@ -149,7 +149,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
             <div className="text-right shrink-0">
               <div
                 className={clsx(
-                  'text-xl sm:text-2xl font-black font-mono tracking-tight',
+                  'text-xl sm:text-2xl font-black font-mono tracking-tight privacy-blur',
                   isSafe && 'text-emerald-400',
                   isWarning && 'text-amber-400',
                   isDanger && 'text-rose-400'

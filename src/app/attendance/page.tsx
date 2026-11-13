@@ -184,10 +184,10 @@ export default function AttendancePage() {
                   {attendance.profile.name.charAt(0) || 'S'}
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate">
+                  <h2 className="text-sm sm:text-base font-bold text-white tracking-tight truncate privacy-blur">
                     {attendance.profile.name}
                   </h2>
-                  <p className="text-[11px] sm:text-xs text-slate-400 font-mono truncate">
+                  <p className="text-[11px] sm:text-xs text-slate-400 font-mono truncate privacy-blur">
                     {attendance.profile.rollNumber} • {attendance.profile.program} (Sem {attendance.profile.semester})
                   </p>
                 </div>
