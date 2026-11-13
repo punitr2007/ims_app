@@ -1,18 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AttendanceResponse } from '@/lib/ims/types';
-import { Lock, User, KeyRound, Loader2, AlertTriangle, RefreshCw, Sparkles, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, KeyRound, Loader2, AlertTriangle, RefreshCw, Sparkles, ShieldCheck, Eye, EyeOff, X } from 'lucide-react';
 
 interface LoginFormProps {
   onSuccess: (data: AttendanceResponse) => void;
+  initialRollNumber?: string;
+  isModal?: boolean;
+  onCancel?: () => void;
 }
 
 type FlowStep = 'credentials' | 'captcha' | 'loading';
 
-export function LoginForm({ onSuccess }: LoginFormProps) {
-  const [rollNumber, setRollNumber] = useState('');
+export function LoginForm({ onSuccess, initialRollNumber, isModal, onCancel }: LoginFormProps) {
+  const [rollNumber, setRollNumber] = useState(initialRollNumber || '');
   const [password, setPassword] = useState('');
+  const [rememberRoll, setRememberRoll] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [captchaText, setCaptchaText] = useState('');
   const [captchaImage, setCaptchaImage] = useState<string | null>(null);
@@ -20,6 +24,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [step, setStep] = useState<FlowStep>('credentials');
   const [loadingMsg, setLoadingMsg] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Restore saved roll number from localStorage on client mount
+  useEffect(() => {
+    if (!rollNumber) {
+      try {
+        const saved = localStorage.getItem('ims_saved_roll_number');
+        if (saved) {
+          setRollNumber(saved);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [rollNumber]);
 
   /**
    * Step 1: User hits "Fetch Attendance" — sends credentials.
@@ -30,6 +48,17 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     if (!rollNumber.trim() || !password) {
       setError('Please enter your Roll Number and Password.');
       return;
+    }
+
+    // Save or clear remembered roll number
+    try {
+      if (rememberRoll && rollNumber.trim()) {
+        localStorage.setItem('ims_saved_roll_number', rollNumber.trim());
+      } else if (!rememberRoll) {
+        localStorage.removeItem('ims_saved_roll_number');
+      }
+    } catch {
+      // ignore
     }
 
     setError(null);
@@ -162,13 +191,28 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     <div className="w-full max-w-md mx-auto px-1 sm:px-0">
       <div className="glass-panel p-5 sm:p-8 rounded-3xl border border-white/10 shadow-2xl space-y-5 sm:space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
+        <div className="relative text-center space-y-2">
+          {isModal && onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="absolute -top-1 -right-1 p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-all border border-white/5 active:scale-90"
+              title="Close and keep cached data"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-sky-400 flex items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
             <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">Student Portal Login</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            {isModal ? 'Sync Fresh IMS Data' : 'Student Portal Login'}
+          </h2>
           <p className="text-[11px] sm:text-xs text-slate-400 max-w-xs mx-auto">
-            Direct ephemeral connection to IMS NSUT. Your credentials are never stored.
+            {isModal
+              ? 'Enter your credentials to refresh live attendance & daily records directly from IMS NSUT.'
+              : 'Direct ephemeral connection to IMS NSUT. Your credentials are never stored.'}
           </p>
         </div>
 
@@ -230,24 +274,49 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               </div>
             </div>
 
-            <button
-              id="fetch-attendance-btn"
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-500 hover:to-sky-400 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group active:scale-[0.99]"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{loadingMsg || 'Connecting...'}</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                  <span>Fetch Attendance</span>
-                </>
+            {/* Remember Roll Checkbox */}
+            <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberRoll}
+                  onChange={(e) => setRememberRoll(e.target.checked)}
+                  className="rounded border-white/20 bg-slate-900 text-brand-500 focus:ring-brand-500/30 w-3.5 h-3.5 cursor-pointer accent-brand-500"
+                />
+                <span className="text-[11px] text-slate-300">Remember my roll number on this device</span>
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isModal && onCancel && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={isLoading}
+                  className="py-3.5 sm:py-3 px-4 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-slate-300 hover:text-white font-medium text-xs sm:text-sm transition-all active:scale-95"
+                >
+                  Cancel
+                </button>
               )}
-            </button>
+              <button
+                id="fetch-attendance-btn"
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 py-3.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-500 hover:to-sky-400 text-white font-semibold text-sm shadow-lg shadow-brand-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group active:scale-[0.99]"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{loadingMsg || 'Connecting...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                    <span>{isModal ? 'Connect & Fetch Code' : 'Fetch Attendance'}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         )}
 

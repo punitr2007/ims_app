@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Square -->
+  <rect width="512" height="512" rx="128" fill="#020617" />
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="url(#bg)" fill-opacity="0.15" stroke="url(#glow)" stroke-width="8" />
+
+  <!-- Graduation Cap & Academic Shield Icon -->
+  <g transform="translate(64, 80) scale(0.75)" stroke="url(#glow)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Cap Top -->
+    <polygon points="256 64 480 176 256 288 32 176 256 64" fill="#0284c7" fill-opacity="0.35" />
+    <!-- Cap Base -->
+    <path d="M112 216v120c0 40 64 80 144 80s144-40 144-80V216" />
+    <!-- Tassel -->
+    <path d="M432 200v176c0 16-16 32-32 32" stroke="#38bdf8" stroke-width="20" />
+    <circle cx="400" cy="420" r="16" fill="#38bdf8" />
+  </g>
+
+  <!-- Star / Accent Dot -->
+  <circle cx="390" cy="120" r="14" fill="#38bdf8" />
+</svg>

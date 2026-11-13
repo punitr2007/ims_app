@@ -14,6 +14,9 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  ShieldAlert,
+  TrendingUp,
+  TrendingDown,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -71,7 +74,8 @@ function parseAttendanceStatus(val: unknown): { isPresent: boolean; isAbsent: bo
 
 export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCardProps) {
   const [showDaily, setShowDaily] = useState(false);
-  const [simulatedBunks, setSimulatedBunks] = useState(0);
+  const [simMode, setSimMode] = useState<'skip' | 'attend'>('skip');
+  const [simDelta, setSimDelta] = useState(0);
 
   const dailyEntries = Object.entries(subject.dailyAttendance || {});
 
@@ -103,10 +107,13 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
   const isSafe = subject.totalHeld === 0 ? true : status === 'safe';
   const isWarning = subject.totalHeld > 0 && status === 'warning';
   const isDanger = subject.totalHeld > 0 && status === 'danger';
+  const isBorderlineRisk = isSafe && subject.totalHeld > 0 && bunkableClasses <= 1;
 
-  // --- Real-time "What If I Skip" Simulation ---
-  const simTotalHeld = subject.totalHeld + simulatedBunks;
-  const simAttended = subject.attended;
+  // --- Real-Time Simulation (Both Skip and Attend) ---
+  const simTotalHeld =
+    simMode === 'skip' ? subject.totalHeld + simDelta : subject.totalHeld + simDelta;
+  const simAttended =
+    simMode === 'skip' ? subject.attended : subject.attended + simDelta;
   const simPercentage =
     simTotalHeld > 0 ? Math.round((simAttended / simTotalHeld) * 1000) / 10 : subject.percentage;
 
@@ -116,9 +123,8 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
   const simIsDanger = simTotalHeld > 0 && simPercentage < targetPercentage - 5;
 
   const pctDiff = Math.round((simPercentage - subject.percentage) * 10) / 10;
-  const remainingSafeBunks = Math.max(0, bunkableClasses - simulatedBunks);
+  const remainingSafeBunks = Math.max(0, bunkableClasses - (simMode === 'skip' ? simDelta : 0));
 
-  // Recovery classes needed if simulated skips put attendance under target
   const simRequiredClasses =
     simPercentage < targetPercentage
       ? Math.ceil((targetPercentage * simTotalHeld - 100 * simAttended) / (100 - targetPercentage))
@@ -192,7 +198,17 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
           </div>
         </div>
 
-        {/* Bunk / Recovery Insight Ribbon (mirrors reference imsnsit app) */}
+        {/* Proactive Detention Risk Alert (Hajiri-inspired Margin Alarm) */}
+        {isBorderlineRisk && (
+          <div className="p-2.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-[11px] leading-tight">
+              <strong>High Danger Zone:</strong> Missing just 1 more class will drop attendance below {targetPercentage}%.
+            </span>
+          </div>
+        )}
+
+        {/* Bunk / Recovery Insight Ribbon */}
         <div
           className={clsx(
             'p-3 rounded-2xl text-[11px] sm:text-xs flex items-center gap-2.5 font-medium leading-relaxed',
@@ -239,78 +255,84 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
           )}
         </div>
 
-        {/* Interactive Skip Classes Simulator */}
+        {/* Interactive What-If Simulator (Both Bunk & Attend) */}
         {subject.totalHeld > 0 && (
           <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
                 <Calculator className="w-3.5 h-3.5 text-brand-400" />
-                <span>Simulate Skipping Classes</span>
+                <span>What-If Simulator</span>
               </div>
-              {bunkableClasses > 0 ? (
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full font-bold">
-                  Max Safe: {bunkableClasses}
-                </span>
-              ) : (
-                <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full font-bold">
-                  0 Safe Skips
-                </span>
-              )}
+
+              {/* Mode Toggle: Skip vs Attend */}
+              <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-xl border border-white/10 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimMode('skip');
+                    setSimDelta(0);
+                  }}
+                  className={clsx(
+                    'px-2 py-0.5 rounded-lg font-bold transition-all',
+                    simMode === 'skip' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
+                  )}
+                >
+                  Skip (-)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimMode('attend');
+                    setSimDelta(0);
+                  }}
+                  className={clsx(
+                    'px-2 py-0.5 rounded-lg font-bold transition-all',
+                    simMode === 'attend' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+                  )}
+                >
+                  Attend (+)
+                </button>
+              </div>
             </div>
 
-            {/* Stepper & Dropdown Controls (Mobile Touch Optimized) */}
+            {/* Stepper & Dropdown Controls */}
             <div className="flex items-center gap-2">
-              {/* Stepper Minus */}
               <button
                 type="button"
-                onClick={() => setSimulatedBunks((prev) => Math.max(0, prev - 1))}
-                disabled={simulatedBunks === 0}
+                onClick={() => setSimDelta((prev) => Math.max(0, prev - 1))}
+                disabled={simDelta === 0}
                 className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 disabled:opacity-30 flex items-center justify-center text-slate-200 transition-all border border-white/5 shrink-0"
-                title="Decrease skipped classes"
-                aria-label="Decrease skipped classes"
+                title="Decrease"
+                aria-label="Decrease"
               >
                 <Minus className="w-4 h-4" />
               </button>
 
-              {/* Number display / select dropdown */}
-              <div className="flex-1 relative">
-                <select
-                  value={simulatedBunks}
-                  onChange={(e) => setSimulatedBunks(Number(e.target.value))}
-                  className="w-full bg-slate-950/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-brand-500 appearance-none cursor-pointer"
-                >
-                  <option value={0}>0 classes (Current)</option>
-                  {Array.from({ length: Math.max(10, bunkableClasses + 4) }, (_, i) => i + 1).map(
-                    (num) => (
-                      <option key={num} value={num}>
-                        Skip {num} {num === 1 ? 'class' : 'classes'}
-                        {num <= bunkableClasses ? ' (Safe)' : ' (Shortage)'}
-                      </option>
-                    )
-                  )}
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div className="flex-1 text-center bg-slate-950/90 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-white">
+                {simDelta === 0
+                  ? '0 classes (Current)'
+                  : simMode === 'skip'
+                  ? `Skip ${simDelta} class${simDelta > 1 ? 'es' : ''}`
+                  : `Attend next ${simDelta} class${simDelta > 1 ? 'es' : ''}`}
               </div>
 
-              {/* Stepper Plus */}
               <button
                 type="button"
-                onClick={() => setSimulatedBunks((prev) => prev + 1)}
+                onClick={() => setSimDelta((prev) => prev + 1)}
                 className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 flex items-center justify-center text-slate-200 transition-all border border-white/5 shrink-0"
-                title="Increase skipped classes"
-                aria-label="Increase skipped classes"
+                title="Increase"
+                aria-label="Increase"
               >
                 <Plus className="w-4 h-4" />
               </button>
 
-              {/* Reset Button */}
-              {simulatedBunks > 0 && (
+              {simDelta > 0 && (
                 <button
                   type="button"
-                  onClick={() => setSimulatedBunks(0)}
+                  onClick={() => setSimDelta(0)}
                   className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 active:scale-90 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-all border border-white/5 shrink-0"
                   title="Reset to 0"
-                  aria-label="Reset skipped count"
+                  aria-label="Reset count"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
@@ -324,24 +346,24 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                 <button
                   key={n}
                   type="button"
-                  onClick={() => setSimulatedBunks(n)}
+                  onClick={() => setSimDelta(n)}
                   className={clsx(
                     'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
-                    simulatedBunks === n
+                    simDelta === n
                       ? 'bg-brand-500/25 text-brand-300 border-brand-500/50'
                       : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border-white/5'
                   )}
                 >
-                  +{n}
+                  {simMode === 'skip' ? `-${n}` : `+${n}`}
                 </button>
               ))}
-              {bunkableClasses > 0 && (
+              {simMode === 'skip' && bunkableClasses > 0 && (
                 <button
                   type="button"
-                  onClick={() => setSimulatedBunks(bunkableClasses)}
+                  onClick={() => setSimDelta(bunkableClasses)}
                   className={clsx(
                     'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
-                    simulatedBunks === bunkableClasses
+                    simDelta === bunkableClasses
                       ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50'
                       : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
                   )}
@@ -349,10 +371,24 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                   Max Safe ({bunkableClasses})
                 </button>
               )}
+              {simMode === 'attend' && requiredClasses > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSimDelta(requiredClasses)}
+                  className={clsx(
+                    'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
+                    simDelta === requiredClasses
+                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50'
+                      : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
+                  )}
+                >
+                  Target Recovery ({requiredClasses})
+                </button>
+              )}
             </div>
 
-            {/* Real-Time Projected Outcome Banner */}
-            {simulatedBunks > 0 && (
+            {/* Real-Time Outcome Banner */}
+            {simDelta > 0 && (
               <div
                 className={clsx(
                   'p-2.5 sm:p-3 rounded-xl border text-xs space-y-1.5 animate-in fade-in duration-150',
@@ -377,7 +413,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                     >
                       {simPercentage}%
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-400 flex items-center">
                       ({pctDiff > 0 ? `+${pctDiff}` : pctDiff}%)
                     </span>
                   </div>
@@ -394,26 +430,31 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                 </div>
 
                 <p className="text-[11px] leading-relaxed opacity-90">
-                  {simIsSafe ? (
-                    remainingSafeBunks > 0 ? (
-                      <>
-                        Skipping {simulatedBunks} {simulatedBunks === 1 ? 'class' : 'classes'} leaves
-                        you at <strong>{simPercentage}%</strong>. You can still safely skip{' '}
-                        <strong>{remainingSafeBunks}</strong> more class(es).
-                      </>
+                  {simMode === 'skip' ? (
+                    simIsSafe ? (
+                      remainingSafeBunks > 0 ? (
+                        <>
+                          Skipping {simDelta} class{simDelta === 1 ? '' : 'es'} leaves you at{' '}
+                          <strong>{simPercentage}%</strong>. You can still safely skip{' '}
+                          <strong>{remainingSafeBunks}</strong> more class(es).
+                        </>
+                      ) : (
+                        <>
+                          Skipping {simDelta} class{simDelta === 1 ? '' : 'es'} puts you exactly on the{' '}
+                          <strong>{targetPercentage}%</strong> limit. Zero safe bunks left!
+                        </>
+                      )
                     ) : (
                       <>
-                        Skipping {simulatedBunks} {simulatedBunks === 1 ? 'class' : 'classes'} puts
-                        you exactly on the <strong>{targetPercentage}%</strong> limit. Zero safe
-                        bunks left!
+                        Skipping {simDelta} class{simDelta === 1 ? '' : 'es'} drops attendance to{' '}
+                        <strong>{simPercentage}%</strong>. You will need to attend{' '}
+                        <strong>{simRequiredClasses}</strong> consecutive classes to recover.
                       </>
                     )
                   ) : (
                     <>
-                      Skipping {simulatedBunks} {simulatedBunks === 1 ? 'class' : 'classes'} drops
-                      attendance to <strong>{simPercentage}%</strong> (below {targetPercentage}%).
-                      You would need to attend <strong>{simRequiredClasses}</strong> consecutive
-                      classes to recover.
+                      Attending the next {simDelta} class{simDelta === 1 ? '' : 'es'} brings your attendance
+                      to <strong>{simPercentage}%</strong> ({pctDiff > 0 ? `+${pctDiff}%` : '0%'} boost).
                     </>
                   )}
                 </p>
@@ -443,7 +484,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
         </button>
       </div>
 
-      {/* Daily Attendance Grid (Flutter-inspired Day Cards) */}
+      {/* Daily Attendance Visual Calendar Grid */}
       {showDaily && (
         <div className="border-t border-white/5 px-4 sm:px-5 pb-4 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
           {dailyEntries.length > 0 ? (
@@ -501,4 +542,3 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
     </div>
   );
 }
-

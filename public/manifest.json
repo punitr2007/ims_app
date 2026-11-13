@@ -1,0 +1,20 @@
+{
+  "name": "IMS NSUT Student Portal",
+  "short_name": "IMS NSUT",
+  "description": "Fast, modern academic portal for NSUT students with live attendance tracking, bunk simulator, offline caching, and circulars search.",
+  "start_url": "/attendance",
+  "id": "/attendance",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#0284c7",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"]
+}
