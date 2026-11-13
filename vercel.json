@@ -17,6 +17,10 @@
     "src/app/api/telegram/webhook/route.ts": {
       "maxDuration": 15,
       "memory": 512
+    },
+    "src/app/api/notices/live/route.ts": {
+      "maxDuration": 15,
+      "memory": 512
     }
   }
 }

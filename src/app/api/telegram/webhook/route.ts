@@ -501,8 +501,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Command: /latest or /pdf (Direct PDF delivery)
-    if (text === '/latest' || text === '/pdf' || text === '/latest_pdf') {
+    // Command: /latest or /pdf or /sync or /live (Direct live circular delivery)
+    if (text === '/latest' || text === '/pdf' || text === '/latest_pdf' || text === '/sync' || text === '/live') {
       const latest = getLatestNotices(1);
       if (latest.length === 0) {
         await sendTelegramMessage(chatId, `ℹ️ No notices found in catalog.`);

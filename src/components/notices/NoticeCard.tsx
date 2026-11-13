@@ -2,15 +2,16 @@
 
 import React, { useState } from 'react';
 import { Notice } from '@/lib/ims/types';
-import { Calendar, Building, User, FileText, ExternalLink, Share2, Check, Sparkles } from 'lucide-react';
+import { Calendar, Building, User, FileText, ExternalLink, Share2, Check, Sparkles, Zap } from 'lucide-react';
 import clsx from 'clsx';
 
 interface NoticeCardProps {
   notice: Notice;
   onOpenNotice: (notice: Notice) => void;
+  isFreshlySynced?: boolean;
 }
 
-export function NoticeCard({ notice, onOpenNotice }: NoticeCardProps) {
+export function NoticeCard({ notice, onOpenNotice, isFreshlySynced }: NoticeCardProps) {
   const [copied, setCopied] = useState(false);
 
   const getShareableUrl = () => {
@@ -55,12 +56,18 @@ export function NoticeCard({ notice, onOpenNotice }: NoticeCardProps) {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {isFreshlySynced && (
+              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/25 text-sky-300 border border-sky-400/40 text-[10px] font-bold tracking-wide uppercase shadow-sm shadow-sky-500/20">
+                <Zap className="w-2.5 h-2.5 text-sky-400" />
+                <span>Live IMS</span>
+              </span>
+            )}
             {isExam && (
               <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/25 text-[10px] font-bold tracking-wide uppercase">
                 Exam
               </span>
             )}
-            {notice.isNew && (
+            {notice.isNew && !isFreshlySynced && (
               <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold tracking-wide uppercase shadow-sm shadow-emerald-500/20 animate-pulse">
                 <Sparkles className="w-2.5 h-2.5" />
                 <span>New</span>
