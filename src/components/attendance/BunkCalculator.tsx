@@ -127,34 +127,34 @@ export function BunkCalculator({
         </div>
       </div>
 
-      {/* Grid of Key Metrics */}
+      {/* Grid of Key Metrics (Mobile Responsive 2x2 Grid) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Total Held */}
-        <div className="bg-slate-900/70 p-3.5 sm:p-4 rounded-2xl border border-white/5 space-y-1">
+        <div className="bg-slate-900/70 p-3 sm:p-4 rounded-2xl border border-white/5 space-y-1">
           <div className="text-[11px] sm:text-xs text-slate-400 font-medium">Total Held</div>
-          <div className="text-xl sm:text-2xl font-black text-white font-mono tracking-tight">
+          <div className="text-lg xs:text-xl sm:text-2xl font-black text-white font-mono tracking-tight">
             {hasActiveSim ? `${simTotalHeld}*` : totalHeld}
           </div>
-          <div className="text-[10px] sm:text-[11px] text-slate-500">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">
             {hasActiveSim ? 'Projected classes' : 'Scheduled lectures'}
           </div>
         </div>
 
         {/* Attended */}
-        <div className="bg-slate-900/70 p-3.5 sm:p-4 rounded-2xl border border-white/5 space-y-1">
+        <div className="bg-slate-900/70 p-3 sm:p-4 rounded-2xl border border-white/5 space-y-1">
           <div className="text-[11px] sm:text-xs text-slate-400 font-medium">Attended</div>
-          <div className="text-xl sm:text-2xl font-black text-emerald-400 font-mono tracking-tight">
+          <div className="text-lg xs:text-xl sm:text-2xl font-black text-emerald-400 font-mono tracking-tight">
             {hasActiveSim ? `${simTotalAttended}*` : totalAttended}
           </div>
-          <div className="text-[10px] sm:text-[11px] text-slate-500">Presents recorded</div>
+          <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">Presents recorded</div>
         </div>
 
         {/* Overall Percentage */}
-        <div className="bg-slate-900/70 p-3.5 sm:p-4 rounded-2xl border border-white/5 space-y-1">
-          <div className="text-[11px] sm:text-xs text-slate-400 font-medium">Overall Attendance</div>
+        <div className="bg-slate-900/70 p-3 sm:p-4 rounded-2xl border border-white/5 space-y-1">
+          <div className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Overall Attendance</div>
           <div
             className={clsx(
-              'text-xl sm:text-2xl font-black font-mono tracking-tight flex items-baseline gap-1',
+              'text-lg xs:text-xl sm:text-2xl font-black font-mono tracking-tight flex items-baseline gap-1',
               (hasActiveSim ? simOverallPct : overallPercentage) >= target
                 ? 'text-emerald-400'
                 : (hasActiveSim ? simOverallPct : overallPercentage) >= target - 5
@@ -164,22 +164,22 @@ export function BunkCalculator({
           >
             <span>{hasActiveSim ? simOverallPct : overallPercentage}%</span>
             {hasActiveSim && pctDiff !== 0 && (
-              <span className="text-xs font-bold text-slate-400 font-sans">
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 font-sans">
                 ({pctDiff > 0 ? `+${pctDiff}` : pctDiff}%)
               </span>
             )}
           </div>
-          <div className="text-[10px] sm:text-[11px] text-slate-500">Target is {target}%</div>
+          <div className="text-[10px] sm:text-[11px] text-slate-500 truncate">Target is {target}%</div>
         </div>
 
         {/* Bunk Cushion / Required */}
-        <div className="bg-slate-900/70 p-3.5 sm:p-4 rounded-2xl border border-white/5 space-y-1">
+        <div className="bg-slate-900/70 p-3 sm:p-4 rounded-2xl border border-white/5 space-y-1">
           <div className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">
             {(hasActiveSim ? simOverallBunkData.status === 'safe' : isSafe) ? 'Bunk Margin' : 'Required'}
           </div>
           <div
             className={clsx(
-              'text-xl sm:text-2xl font-black font-mono tracking-tight',
+              'text-lg xs:text-xl sm:text-2xl font-black font-mono tracking-tight',
               (hasActiveSim ? simOverallBunkData.status === 'safe' : isSafe) ? 'text-teal-300' : 'text-rose-400'
             )}
           >
@@ -269,16 +269,16 @@ export function BunkCalculator({
                 return (
                   <div
                     key={sub.subjectCode}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/70 border border-white/5 text-xs"
+                    className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 p-2.5 sm:p-3 rounded-2xl bg-slate-900/70 border border-white/5 text-xs"
                   >
-                    <div className="min-w-0 flex-1 mr-3">
+                    <div className="min-w-0 flex-1 mr-0 xs:mr-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] text-brand-300 font-bold">
+                        <span className="font-mono text-[10px] text-brand-300 font-bold px-1.5 py-0.5 rounded-md bg-brand-500/10 border border-brand-500/20">
                           {sub.subjectCode}
                         </span>
                         <span className="text-white font-medium truncate">{sub.subjectName}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5 font-mono">
+                      <div className="text-[10px] text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 font-mono">
                         <span>Current: {sub.percentage}%</span>
                         {delta !== 0 && (
                           <span
@@ -293,11 +293,11 @@ export function BunkCalculator({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 self-end xs:self-center shrink-0">
                       <button
                         type="button"
                         onClick={() => handleAdjust(sub.subjectCode, -1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 font-bold text-xs border border-white/5 active:scale-90"
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 font-bold text-xs border border-white/5 active:scale-90"
                         title="Simulate skipping 1 lecture"
                       >
                         -1 Skip
@@ -305,7 +305,7 @@ export function BunkCalculator({
                       <button
                         type="button"
                         onClick={() => handleAdjust(sub.subjectCode, 1)}
-                        className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 font-bold text-xs border border-white/5 active:scale-90"
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-emerald-950/60 text-slate-300 hover:text-emerald-300 font-bold text-xs border border-white/5 active:scale-90"
                         title="Simulate attending 1 lecture"
                       >
                         +1 Attend

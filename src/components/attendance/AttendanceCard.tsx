@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { AttendanceSubject } from '@/lib/ims/types';
 import { calculateSubjectBunks } from '@/lib/ims/calculator';
+import { DailyAttendanceView } from './DailyAttendanceView';
 import {
   CheckCircle,
   AlertTriangle,
@@ -295,20 +296,20 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
               </div>
             </div>
 
-            {/* Stepper & Dropdown Controls */}
+            {/* Stepper & Dropdown Controls (Touch-Optimized for Mobile) */}
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setSimDelta((prev) => Math.max(0, prev - 1))}
                 disabled={simDelta === 0}
-                className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 disabled:opacity-30 flex items-center justify-center text-slate-200 transition-all border border-white/5 shrink-0"
+                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 disabled:opacity-30 flex items-center justify-center text-slate-200 transition-all border border-white/10 shrink-0"
                 title="Decrease"
                 aria-label="Decrease"
               >
                 <Minus className="w-4 h-4" />
               </button>
 
-              <div className="flex-1 text-center bg-slate-950/90 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-white">
+              <div className="flex-1 text-center bg-slate-950/90 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white shadow-inner truncate">
                 {simDelta === 0
                   ? '0 classes (Current)'
                   : simMode === 'skip'
@@ -319,7 +320,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
               <button
                 type="button"
                 onClick={() => setSimDelta((prev) => prev + 1)}
-                className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 flex items-center justify-center text-slate-200 transition-all border border-white/5 shrink-0"
+                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 flex items-center justify-center text-slate-200 transition-all border border-white/10 shrink-0"
                 title="Increase"
                 aria-label="Increase"
               >
@@ -330,27 +331,27 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                 <button
                   type="button"
                   onClick={() => setSimDelta(0)}
-                  className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 active:scale-90 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-all border border-white/5 shrink-0"
+                  className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 active:scale-90 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-all border border-white/10 shrink-0"
                   title="Reset to 0"
                   aria-label="Reset count"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
               )}
             </div>
 
             {/* Quick-Preset Chips */}
             <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-              <span className="text-slate-500 text-[10px] font-medium">Quick:</span>
+              <span className="text-slate-500 text-[10px] font-medium mr-0.5">Quick:</span>
               {[1, 2, 3].map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setSimDelta(n)}
                   className={clsx(
-                    'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
+                    'px-2.5 py-1.5 rounded-xl font-mono font-bold text-xs transition-all border active:scale-95',
                     simDelta === n
-                      ? 'bg-brand-500/25 text-brand-300 border-brand-500/50'
+                      ? 'bg-brand-500/25 text-brand-300 border-brand-500/50 shadow-sm shadow-brand-500/20'
                       : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border-white/5'
                   )}
                 >
@@ -362,9 +363,9 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                   type="button"
                   onClick={() => setSimDelta(bunkableClasses)}
                   className={clsx(
-                    'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
+                    'px-2.5 py-1.5 rounded-xl font-mono font-bold text-xs transition-all border active:scale-95',
                     simDelta === bunkableClasses
-                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50'
+                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-500/20'
                       : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
                   )}
                 >
@@ -376,9 +377,9 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
                   type="button"
                   onClick={() => setSimDelta(requiredClasses)}
                   className={clsx(
-                    'px-2.5 py-1 rounded-lg font-mono font-medium text-xs transition-all border active:scale-95',
+                    'px-2.5 py-1.5 rounded-xl font-mono font-bold text-xs transition-all border active:scale-95',
                     simDelta === requiredClasses
-                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50'
+                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-500/20'
                       : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
                   )}
                 >
@@ -484,59 +485,14 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
         </button>
       </div>
 
-      {/* Daily Attendance Visual Calendar Grid */}
+      {/* Daily Attendance Visual Timeline & Records View */}
       {showDaily && (
-        <div className="border-t border-white/5 px-4 sm:px-5 pb-4 pt-3 animate-in fade-in slide-in-from-top-1 duration-200">
-          {dailyEntries.length > 0 ? (
-            <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-6 md:grid-cols-7 gap-1.5 sm:gap-2 max-h-56 overflow-y-auto pr-1">
-              {dailyEntries.map(([day, val]) => {
-                const { isPresent, isAbsent } = parseAttendanceStatus(val);
-                const displayVal = isPresent
-                  ? val.includes('CR')
-                    ? val
-                    : 'P'
-                  : isAbsent
-                  ? val.includes('CR')
-                    ? val
-                    : 'A'
-                  : val;
-
-                return (
-                  <div
-                    key={day}
-                    title={`${day}: ${val}`}
-                    className={clsx(
-                      'flex flex-col items-center justify-between p-2 rounded-xl border text-center transition-all',
-                      isPresent &&
-                        'bg-emerald-950/40 border-emerald-800/40 text-emerald-200 shadow-sm shadow-emerald-950/50',
-                      isAbsent &&
-                        'bg-rose-950/40 border-rose-800/40 text-rose-200 shadow-sm shadow-rose-950/50',
-                      !isPresent && !isAbsent && 'bg-slate-900/60 border-white/5 text-slate-400'
-                    )}
-                  >
-                    <span className="text-[10px] text-slate-400 font-mono leading-tight truncate w-full">
-                      {day.replace(/^0/, '')}
-                    </span>
-                    <span
-                      className={clsx(
-                        'text-xs font-black font-mono mt-1 px-1.5 py-0.5 rounded-md',
-                        isPresent && 'bg-emerald-500/20 text-emerald-300',
-                        isAbsent && 'bg-rose-500/20 text-rose-300',
-                        !isPresent && !isAbsent && 'bg-slate-800 text-slate-400'
-                      )}
-                    >
-                      {displayVal}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-xs text-slate-500 py-1 italic">
-              No individual lecture dates recorded yet by the department for this course. Total classes
-              held: {subject.totalHeld}.
-            </div>
-          )}
+        <div className="border-t border-white/10 px-3.5 sm:px-5 pb-4 pt-3.5 bg-slate-950/40 animate-in fade-in slide-in-from-top-1 duration-200">
+          <DailyAttendanceView
+            dailyAttendance={subject.dailyAttendance || {}}
+            totalHeld={subject.totalHeld}
+            attended={subject.attended}
+          />
         </div>
       )}
     </div>

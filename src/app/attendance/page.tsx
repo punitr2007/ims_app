@@ -113,19 +113,19 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        {/* Top Actions when Authenticated */}
+        {/* Top Actions when Authenticated (Mobile-Responsive Tap Targets) */}
         {attendance && (
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => setIsSyncModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-500 hover:to-sky-400 text-white text-xs font-semibold shadow-md shadow-brand-500/20 transition-all active:scale-95"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-sky-500 hover:from-brand-500 hover:to-sky-400 text-white text-xs font-semibold shadow-md shadow-brand-500/20 transition-all active:scale-95"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Sync IMS Fresh Data</span>
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 text-xs font-medium transition-all active:scale-95"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 text-xs font-medium transition-all active:scale-95 shrink-0"
               title="Clear cached profile on this device"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -267,10 +267,10 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {/* Sync Fresh Data Modal */}
+      {/* Sync Fresh Data Modal (Mobile Scroll & Keyboard Resilient) */}
       {isSyncModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="w-full max-w-md my-auto">
             <LoginForm
               onSuccess={handleLoginSuccess}
               initialRollNumber={attendance?.profile?.rollNumber}
