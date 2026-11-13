@@ -3,21 +3,16 @@
 import React, { useState } from 'react';
 import { AttendanceSubject } from '@/lib/ims/types';
 import { calculateSubjectBunks } from '@/lib/ims/calculator';
-import { DailyAttendanceView } from './DailyAttendanceView';
+import { AttendanceDetailOverlay } from './AttendanceDetailOverlay';
 import {
   CheckCircle,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   CalendarDays,
   Calculator,
-  Minus,
-  Plus,
-  RotateCcw,
-  Sparkles,
   ShieldAlert,
+  ExternalLink,
+  ChevronRight,
   TrendingUp,
-  TrendingDown,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -74,9 +69,8 @@ function parseAttendanceStatus(val: unknown): { isPresent: boolean; isAbsent: bo
 }
 
 export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCardProps) {
-  const [showDaily, setShowDaily] = useState(false);
-  const [simMode, setSimMode] = useState<'skip' | 'attend'>('skip');
-  const [simDelta, setSimDelta] = useState(0);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailTab, setDetailTab] = useState<'daily' | 'simulator'>('daily');
 
   const dailyEntries = Object.entries(subject.dailyAttendance || {});
 
@@ -110,391 +104,191 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
   const isDanger = subject.totalHeld > 0 && status === 'danger';
   const isBorderlineRisk = isSafe && subject.totalHeld > 0 && bunkableClasses <= 1;
 
-  // --- Real-Time Simulation (Both Skip and Attend) ---
-  const simTotalHeld =
-    simMode === 'skip' ? subject.totalHeld + simDelta : subject.totalHeld + simDelta;
-  const simAttended =
-    simMode === 'skip' ? subject.attended : subject.attended + simDelta;
-  const simPercentage =
-    simTotalHeld > 0 ? Math.round((simAttended / simTotalHeld) * 1000) / 10 : subject.percentage;
-
-  const simIsSafe = simTotalHeld === 0 ? true : simPercentage >= targetPercentage;
-  const simIsWarning =
-    simTotalHeld > 0 && simPercentage < targetPercentage && simPercentage >= targetPercentage - 5;
-  const simIsDanger = simTotalHeld > 0 && simPercentage < targetPercentage - 5;
-
-  const pctDiff = Math.round((simPercentage - subject.percentage) * 10) / 10;
-  const remainingSafeBunks = Math.max(0, bunkableClasses - (simMode === 'skip' ? simDelta : 0));
-
-  const simRequiredClasses =
-    simPercentage < targetPercentage
-      ? Math.ceil((targetPercentage * simTotalHeld - 100 * simAttended) / (100 - targetPercentage))
-      : 0;
+  const handleOpenDetail = (tab: 'daily' | 'simulator', e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setDetailTab(tab);
+    setIsDetailOpen(true);
+  };
 
   return (
-    <div className="glass-panel rounded-3xl border border-white/5 hover:border-white/10 transition-all overflow-hidden flex flex-col justify-between shadow-xl">
-      <div className="p-4 sm:p-5.5 space-y-3.5 sm:space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2.5">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-md bg-brand-500/15 text-brand-300 font-mono text-[11px] sm:text-xs font-bold border border-brand-500/20">
-                {subject.subjectCode}
-              </span>
-              {subject.credits && (
-                <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
-                  {subject.credits} Credits
-                </span>
-              )}
-            </div>
-            <h4 className="font-bold text-white text-sm sm:text-base leading-snug tracking-tight">
-              {subject.subjectName}
-            </h4>
-          </div>
-
-          {/* Percentage Badge */}
-          <div className="text-right shrink-0">
-            <div
-              className={clsx(
-                'text-xl sm:text-2xl font-black font-mono tracking-tight',
-                isSafe && 'text-emerald-400',
-                isWarning && 'text-amber-400',
-                isDanger && 'text-rose-400'
-              )}
-            >
-              {subject.percentage}%
-            </div>
-            <span
-              className={clsx(
-                'text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5',
-                isSafe && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-                isWarning && 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-                isDanger && 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-              )}
-            >
-              {isSafe ? 'Safe' : isWarning ? 'Warning' : 'Shortage'}
-            </span>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="space-y-1.5">
-          <div className="w-full h-2 sm:h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-white/5">
-            <div
-              className={clsx(
-                'h-full rounded-full transition-all duration-500',
-                isSafe && 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/30',
-                isWarning && 'bg-gradient-to-r from-amber-500 to-yellow-400 shadow-sm shadow-amber-500/30',
-                isDanger && 'bg-gradient-to-r from-rose-600 to-rose-400 shadow-sm shadow-rose-500/30'
-              )}
-              style={{ width: `${Math.min(subject.percentage, 100)}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-400 font-medium">
-            <span>
-              Attended: <strong className="text-slate-200">{subject.attended}</strong> /{' '}
-              {subject.totalHeld} classes
-            </span>
-            <span>Target: {targetPercentage}%</span>
-          </div>
-        </div>
-
-        {/* Proactive Detention Risk Alert (Hajiri-inspired Margin Alarm) */}
-        {isBorderlineRisk && (
-          <div className="p-2.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="text-[11px] leading-tight">
-              <strong>High Danger Zone:</strong> Missing just 1 more class will drop attendance below {targetPercentage}%.
-            </span>
-          </div>
-        )}
-
-        {/* Bunk / Recovery Insight Ribbon */}
+    <>
+      <div
+        onClick={() => handleOpenDetail('daily')}
+        className="glass-panel glass-panel-hover rounded-3xl border border-white/5 hover:border-brand-500/30 transition-all p-4 sm:p-5 flex flex-col justify-between shadow-xl cursor-pointer group relative overflow-hidden h-full min-h-[250px]"
+      >
+        {/* Subtle top ambient indicator */}
         <div
           className={clsx(
-            'p-3 rounded-2xl text-[11px] sm:text-xs flex items-center gap-2.5 font-medium leading-relaxed',
-            isSafe
-              ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40'
-              : isWarning
-              ? 'bg-amber-950/40 text-amber-300 border border-amber-800/40'
-              : 'bg-rose-950/40 text-rose-300 border border-rose-800/40'
+            'absolute top-0 left-0 right-0 h-1 transition-all',
+            isSafe && 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-70 group-hover:opacity-100',
+            isWarning && 'bg-gradient-to-r from-amber-500 to-yellow-400 opacity-70 group-hover:opacity-100',
+            isDanger && 'bg-gradient-to-r from-rose-600 to-rose-400 opacity-80 group-hover:opacity-100'
           )}
-        >
-          {subject.totalHeld === 0 ? (
-            <>
-              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>No classes scheduled or recorded yet for this course.</span>
-            </>
-          ) : isSafe ? (
-            <>
-              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>
-                {bunkableClasses > 0 ? (
-                  <>
-                    You can safely bunk the next{' '}
-                    <strong className="underline decoration-emerald-500 font-bold">
-                      {bunkableClasses}
-                    </strong>{' '}
-                    classes without going below {targetPercentage}%.
-                  </>
-                ) : (
-                  <>You are right on the {targetPercentage}% margin. Don&apos;t miss the next class!</>
+        />
+
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="space-y-1 pr-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-brand-500/15 text-brand-300 font-mono text-[11px] sm:text-xs font-bold border border-brand-500/20">
+                  {subject.subjectCode}
+                </span>
+                {subject.credits && (
+                  <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
+                    {subject.credits} Credits
+                  </span>
                 )}
-              </span>
-            </>
-          ) : (
-            <>
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>
-                Must attend next{' '}
-                <strong className="underline decoration-rose-500 font-bold">
-                  {requiredClasses}
-                </strong>{' '}
-                consecutive classes to reach {targetPercentage}%.
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Interactive What-If Simulator (Both Bunk & Attend) */}
-        {subject.totalHeld > 0 && (
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2.5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
-                <Calculator className="w-3.5 h-3.5 text-brand-400" />
-                <span>What-If Simulator</span>
               </div>
-
-              {/* Mode Toggle: Skip vs Attend */}
-              <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded-xl border border-white/10 text-[10px]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSimMode('skip');
-                    setSimDelta(0);
-                  }}
-                  className={clsx(
-                    'px-2 py-0.5 rounded-lg font-bold transition-all',
-                    simMode === 'skip' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
-                  )}
-                >
-                  Skip (-)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSimMode('attend');
-                    setSimDelta(0);
-                  }}
-                  className={clsx(
-                    'px-2 py-0.5 rounded-lg font-bold transition-all',
-                    simMode === 'attend' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
-                  )}
-                >
-                  Attend (+)
-                </button>
-              </div>
+              <h4 className="font-bold text-white text-sm sm:text-base leading-snug tracking-tight line-clamp-2 min-h-[2.5rem]">
+                {subject.subjectName}
+              </h4>
             </div>
 
-            {/* Stepper & Dropdown Controls (Touch-Optimized for Mobile) */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSimDelta((prev) => Math.max(0, prev - 1))}
-                disabled={simDelta === 0}
-                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 disabled:opacity-30 flex items-center justify-center text-slate-200 transition-all border border-white/10 shrink-0"
-                title="Decrease"
-                aria-label="Decrease"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-
-              <div className="flex-1 text-center bg-slate-950/90 border border-white/10 rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white shadow-inner truncate">
-                {simDelta === 0
-                  ? '0 classes (Current)'
-                  : simMode === 'skip'
-                  ? `Skip ${simDelta} class${simDelta > 1 ? 'es' : ''}`
-                  : `Attend next ${simDelta} class${simDelta > 1 ? 'es' : ''}`}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSimDelta((prev) => prev + 1)}
-                className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 active:scale-90 flex items-center justify-center text-slate-200 transition-all border border-white/10 shrink-0"
-                title="Increase"
-                aria-label="Increase"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-
-              {simDelta > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSimDelta(0)}
-                  className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-800/90 hover:bg-rose-950/60 active:scale-90 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-all border border-white/10 shrink-0"
-                  title="Reset to 0"
-                  aria-label="Reset count"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Quick-Preset Chips */}
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-              <span className="text-slate-500 text-[10px] font-medium mr-0.5">Quick:</span>
-              {[1, 2, 3].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setSimDelta(n)}
-                  className={clsx(
-                    'px-2.5 py-1.5 rounded-xl font-mono font-bold text-xs transition-all border active:scale-95',
-                    simDelta === n
-                      ? 'bg-brand-500/25 text-brand-300 border-brand-500/50 shadow-sm shadow-brand-500/20'
-                      : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 border-white/5'
-                  )}
-                >
-                  {simMode === 'skip' ? `-${n}` : `+${n}`}
-                </button>
-              ))}
-              {simMode === 'skip' && bunkableClasses > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSimDelta(bunkableClasses)}
-                  className={clsx(
-                    'px-2.5 py-1.5 rounded-xl font-mono font-bold text-xs transition-all border active:scale-95',
-                    simDelta === bunkableClasses
-                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-500/20'
-                      : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
-                  )}
-                >
-                  Max Safe ({bunkableClasses})
-                </button>
-              )}
-              {simMode === 'attend' && requiredClasses > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSimDelta(requiredClasses)}
-                  className={clsx(
-                    'px-2.5 py-1.5 rounded-xl font-mono font-bold text-xs transition-all border active:scale-95',
-                    simDelta === requiredClasses
-                      ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-500/20'
-                      : 'bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40 border-emerald-800/30'
-                  )}
-                >
-                  Target Recovery ({requiredClasses})
-                </button>
-              )}
-            </div>
-
-            {/* Real-Time Outcome Banner */}
-            {simDelta > 0 && (
+            {/* Percentage Badge */}
+            <div className="text-right shrink-0">
               <div
                 className={clsx(
-                  'p-2.5 sm:p-3 rounded-xl border text-xs space-y-1.5 animate-in fade-in duration-150',
-                  simIsSafe
-                    ? 'bg-emerald-950/35 border-emerald-800/40 text-emerald-200'
-                    : simIsWarning
-                    ? 'bg-amber-950/35 border-amber-800/40 text-amber-200'
-                    : 'bg-rose-950/35 border-rose-800/40 text-rose-200'
+                  'text-xl sm:text-2xl font-black font-mono tracking-tight',
+                  isSafe && 'text-emerald-400',
+                  isWarning && 'text-amber-400',
+                  isDanger && 'text-rose-400'
                 )}
               >
-                <div className="flex items-center justify-between font-mono font-semibold">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-400">{subject.percentage}%</span>
-                    <span className="text-slate-500">→</span>
-                    <span
-                      className={clsx(
-                        'text-sm font-black',
-                        simIsSafe && 'text-emerald-400',
-                        simIsWarning && 'text-amber-400',
-                        simIsDanger && 'text-rose-400'
-                      )}
-                    >
-                      {simPercentage}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 flex items-center">
-                      ({pctDiff > 0 ? `+${pctDiff}` : pctDiff}%)
-                    </span>
-                  </div>
-                  <span
-                    className={clsx(
-                      'text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full',
-                      simIsSafe && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-                      simIsWarning && 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-                      simIsDanger && 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                    )}
-                  >
-                    {simIsSafe ? 'Safe' : simIsWarning ? 'Margin' : 'Shortage'}
-                  </span>
-                </div>
-
-                <p className="text-[11px] leading-relaxed opacity-90">
-                  {simMode === 'skip' ? (
-                    simIsSafe ? (
-                      remainingSafeBunks > 0 ? (
-                        <>
-                          Skipping {simDelta} class{simDelta === 1 ? '' : 'es'} leaves you at{' '}
-                          <strong>{simPercentage}%</strong>. You can still safely skip{' '}
-                          <strong>{remainingSafeBunks}</strong> more class(es).
-                        </>
-                      ) : (
-                        <>
-                          Skipping {simDelta} class{simDelta === 1 ? '' : 'es'} puts you exactly on the{' '}
-                          <strong>{targetPercentage}%</strong> limit. Zero safe bunks left!
-                        </>
-                      )
-                    ) : (
-                      <>
-                        Skipping {simDelta} class{simDelta === 1 ? '' : 'es'} drops attendance to{' '}
-                        <strong>{simPercentage}%</strong>. You will need to attend{' '}
-                        <strong>{simRequiredClasses}</strong> consecutive classes to recover.
-                      </>
-                    )
-                  ) : (
-                    <>
-                      Attending the next {simDelta} class{simDelta === 1 ? '' : 'es'} brings your attendance
-                      to <strong>{simPercentage}%</strong> ({pctDiff > 0 ? `+${pctDiff}%` : '0%'} boost).
-                    </>
-                  )}
-                </p>
+                {subject.percentage}%
               </div>
+              <span
+                className={clsx(
+                  'text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5',
+                  isSafe && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+                  isWarning && 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+                  isDanger && 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                )}
+              >
+                {isSafe ? 'Safe' : isWarning ? 'Warning' : 'Shortage'}
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="space-y-1.5">
+            <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-white/5">
+              <div
+                className={clsx(
+                  'h-full rounded-full transition-all duration-500',
+                  isSafe && 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/30',
+                  isWarning && 'bg-gradient-to-r from-amber-500 to-yellow-400 shadow-sm shadow-amber-500/30',
+                  isDanger && 'bg-gradient-to-r from-rose-600 to-rose-400 shadow-sm shadow-rose-500/30'
+                )}
+                style={{ width: `${Math.min(subject.percentage, 100)}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+              <span>
+                Attended: <strong className="text-slate-200">{subject.attended}</strong> /{' '}
+                {subject.totalHeld} classes
+              </span>
+              <span>Target: {targetPercentage}%</span>
+            </div>
+          </div>
+
+          {/* High Danger Zone Ribbon (if 1 class away from shortage) */}
+          {isBorderlineRisk && (
+            <div className="p-2 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-center gap-2">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="text-[11px] leading-tight truncate">
+                <strong>High Danger:</strong> Missing 1 more class drops below {targetPercentage}%.
+              </span>
+            </div>
+          )}
+
+          {/* Bunk / Recovery Insight Ribbon */}
+          <div
+            className={clsx(
+              'p-2.5 rounded-2xl text-[11px] sm:text-xs flex items-center gap-2 font-medium leading-tight',
+              isSafe
+                ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-800/30'
+                : isWarning
+                ? 'bg-amber-950/30 text-amber-300 border border-amber-800/30'
+                : 'bg-rose-950/30 text-rose-300 border border-rose-800/30'
+            )}
+          >
+            {subject.totalHeld === 0 ? (
+              <>
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">No classes recorded yet for this course.</span>
+              </>
+            ) : isSafe ? (
+              <>
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">
+                  {bunkableClasses > 0 ? (
+                    <>
+                      Can safely bunk next{' '}
+                      <strong className="underline decoration-emerald-500 font-bold">
+                        {bunkableClasses}
+                      </strong>{' '}
+                      class{bunkableClasses === 1 ? '' : 'es'}.
+                    </>
+                  ) : (
+                    <>Right on {targetPercentage}% limit. Don&apos;t miss!</>
+                  )}
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <span className="truncate">
+                  Attend next{' '}
+                  <strong className="underline decoration-rose-500 font-bold">
+                    {requiredClasses}
+                  </strong>{' '}
+                  consecutive classes to reach {targetPercentage}%.
+                </span>
+              </>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Daily Attendance Toggle */}
-        <button
-          onClick={() => setShowDaily((p) => !p)}
-          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-slate-900/70 border border-white/5 hover:border-white/10 active:scale-[0.99] transition-all text-xs text-slate-300 hover:text-white"
-        >
-          <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-brand-400" />
-            <span className="font-medium">
-              Daily Records — <span className="text-emerald-400 font-bold">{presentDays}P</span> /{' '}
-              <span className="text-rose-400 font-bold">{absentDays}A</span>{' '}
-              <span className="text-slate-500 font-normal">({totalClassesCount} lectures)</span>
+        {/* Space-Efficient Bottom Action Triggers */}
+        <div className="pt-3.5 mt-3 border-t border-white/5 flex items-center gap-2">
+          {/* Daily Records Button */}
+          <button
+            type="button"
+            onClick={(e) => handleOpenDetail('daily', e)}
+            className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-brand-500/30 active:scale-[0.98] transition-all text-xs text-slate-300 hover:text-white group/btn"
+          >
+            <div className="flex items-center gap-1.5 truncate">
+              <CalendarDays className="w-3.5 h-3.5 text-brand-400 shrink-0" />
+              <span className="font-semibold truncate">Daily Records</span>
+            </div>
+            <span className="font-mono text-[10px] text-slate-400 bg-slate-950/80 px-1.5 py-0.5 rounded-md border border-white/5 shrink-0 ml-1">
+              {presentDays}P / {absentDays}A
             </span>
-          </div>
-          {showDaily ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
-          )}
-        </button>
+          </button>
+
+          {/* What-If Simulator Trigger */}
+          <button
+            type="button"
+            onClick={(e) => handleOpenDetail('simulator', e)}
+            className="px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/10 hover:border-brand-500/30 active:scale-[0.98] transition-all text-xs flex items-center gap-1.5 text-slate-300 hover:text-white shrink-0"
+            title="Open What-If Simulator Overlay"
+          >
+            <Calculator className="w-3.5 h-3.5 text-brand-400" />
+            <span className="font-semibold hidden xs:inline">What-If</span>
+            <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-white" />
+          </button>
+        </div>
       </div>
 
-      {/* Daily Attendance Visual Timeline & Records View */}
-      {showDaily && (
-        <div className="border-t border-white/10 px-3.5 sm:px-5 pb-4 pt-3.5 bg-slate-950/40 animate-in fade-in slide-in-from-top-1 duration-200">
-          <DailyAttendanceView
-            dailyAttendance={subject.dailyAttendance || {}}
-            totalHeld={subject.totalHeld}
-            attended={subject.attended}
-          />
-        </div>
-      )}
-    </div>
+      {/* Card Style Overlay (Modal Sheet) */}
+      <AttendanceDetailOverlay
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        subject={subject}
+        targetPercentage={targetPercentage}
+        initialTab={detailTab}
+      />
+    </>
   );
 }
