@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, GraduationCap, Palette, ExternalLink, Sun, Moon } from 'lucide-react';
+import { Bell, GraduationCap, Palette, ExternalLink, Moon } from 'lucide-react';
 import clsx from 'clsx';
 import { AppLogo } from '../brand/AppLogo';
 import { useTheme } from '@/context/ThemeContext';
@@ -74,11 +74,7 @@ export function Navbar() {
             >
               <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-[var(--brand-from,#84cc16)] to-[var(--brand-to,#06b6d4)] shadow-xs" />
               <span className="hidden xs:inline font-medium">Style</span>
-              {resolvedTheme === 'dark' ? (
-                <Moon className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-300" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-45 transition-transform" />
-              )}
+              <Moon className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-300" />
             </button>
 
             {/* Official Portal External Link */}

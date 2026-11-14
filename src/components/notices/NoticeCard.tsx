@@ -2,8 +2,19 @@
 
 import React, { useState } from 'react';
 import { Notice } from '@/lib/ims/types';
-import { Calendar, Building, User, FileText, ExternalLink, Share2, Check, Sparkles, Zap } from 'lucide-react';
+import { Calendar, Building, User, FileText, ExternalLink, Share2, Check, Sparkles, Zap, Clock } from 'lucide-react';
 import clsx from 'clsx';
+
+function formatNoticeTime(scrapedAt?: string): string | null {
+  if (!scrapedAt) return null;
+  try {
+    const d = new Date(scrapedAt);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return null;
+  }
+}
 
 interface NoticeCardProps {
   notice: Notice;
@@ -51,11 +62,22 @@ export function NoticeCard({ notice, onOpenNotice, isFreshlySynced }: NoticeCard
       <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[var(--brand-from,#84cc16)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
       <div className="space-y-3 relative z-10">
-        {/* Top Header: Date, New Badge & Category */}
+        {/* Top Header: Date, Arrival Time, New Badge & Category */}
         <div className="flex items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">
-            <Calendar className="w-3.5 h-3.5 text-sky-400" />
-            <span>{notice.publishedDate}</span>
+          <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] flex-wrap">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-sky-400" />
+              <span>{notice.publishedDate}</span>
+            </span>
+            {notice.scrapedAt && formatNoticeTime(notice.scrapedAt) && (
+              <span
+                className="flex items-center gap-1 text-[10px] text-slate-400 bg-white/[0.04] px-1.5 py-0.5 rounded-md border border-white/5 font-mono"
+                title={`Arrival timestamp: ${new Date(notice.scrapedAt).toLocaleString()}`}
+              >
+                <Clock className="w-2.5 h-2.5 text-[var(--brand-from,#84cc16)]" />
+                <span>{formatNoticeTime(notice.scrapedAt)}</span>
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5">

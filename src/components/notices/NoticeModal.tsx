@@ -16,6 +16,7 @@ import {
   Minimize2,
   Sparkles,
   FileCheck2,
+  Clock,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -109,6 +110,15 @@ export function NoticeModal({ notice, onClose }: NoticeModalProps) {
                 <Calendar className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                 {notice.publishedDate}
               </span>
+              {notice.scrapedAt && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 font-mono text-[11px] sm:text-xs text-[var(--brand-from,#84cc16)] bg-white/[0.04] px-1.5 py-0.5 rounded-md border border-white/5">
+                    <Clock className="w-3 h-3 shrink-0" />
+                    <span>Arrival: {new Date(notice.scrapedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </span>
+                </>
+              )}
               <span>•</span>
               <span className="flex items-center gap-1 text-sky-300 truncate max-w-[220px] sm:max-w-[320px] font-medium">
                 <Building className="w-3.5 h-3.5 shrink-0 text-sky-400" />

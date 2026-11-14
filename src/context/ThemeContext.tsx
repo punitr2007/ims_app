@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
 
-export type ThemeMode = 'dark' | 'light' | 'system';
+export type ThemeMode = 'dark';
 
 export type ColorPaletteId =
   | 'lime-teal'
@@ -88,7 +88,7 @@ export const COLOR_PALETTES: ColorPalette[] = [
 
 interface ThemeContextType {
   themeMode: ThemeMode;
-  resolvedTheme: 'dark' | 'light';
+  resolvedTheme: 'dark';
   palette: ColorPaletteId;
   privacyMode: boolean;
   compactMode: boolean;
@@ -109,14 +109,13 @@ const STORAGE_KEY = 'ims_theme_settings_v2';
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
+  const [themeMode] = useState<ThemeMode>('dark');
   const [palette, setPaletteState] = useState<ColorPaletteId>('lime-teal');
   const [privacyMode, setPrivacyModeState] = useState<boolean>(false);
   const [compactMode, setCompactModeState] = useState<boolean>(false);
   const [ambientGlow, setAmbientGlowState] = useState<boolean>(true);
   const [globalTarget, setGlobalTargetState] = useState<number>(75);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState<boolean>(false);
-  const [systemIsDark, setSystemIsDark] = useState<boolean>(true);
 
   // Initialize from localStorage safely
   useEffect(() => {
@@ -124,7 +123,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.themeMode) setThemeModeState(parsed.themeMode);
         if (parsed.palette) setPaletteState(parsed.palette);
         if (typeof parsed.privacyMode === 'boolean') setPrivacyModeState(parsed.privacyMode);
         if (typeof parsed.compactMode === 'boolean') setCompactModeState(parsed.compactMode);
@@ -134,33 +132,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Fallback to defaults
     }
-
-    // Media query for system theme
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      const mql = window.matchMedia('(prefers-color-scheme: dark)');
-      setSystemIsDark(mql.matches);
-      const listener = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
-      mql.addEventListener('change', listener);
-      return () => mql.removeEventListener('change', listener);
-    }
   }, []);
 
-  const resolvedTheme: 'dark' | 'light' = useMemo(() => {
-    if (themeMode === 'system') {
-      return systemIsDark ? 'dark' : 'light';
-    }
-    return themeMode;
-  }, [themeMode, systemIsDark]);
+  const resolvedTheme: 'dark' = 'dark';
 
   // Apply attributes & CSS variables to document.documentElement
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
 
-    // Apply dark/light class
-    root.classList.remove('dark', 'light');
-    root.classList.add(resolvedTheme);
-    root.setAttribute('data-theme', resolvedTheme);
+    // Apply dark class and remove light
+    root.classList.remove('light');
+    root.classList.add('dark');
+    root.setAttribute('data-theme', 'dark');
 
     // Apply color palette
     root.setAttribute('data-palette', palette);
@@ -182,7 +166,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
-          themeMode,
+          themeMode: 'dark',
           palette,
           privacyMode,
           compactMode,
@@ -193,9 +177,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
-  }, [themeMode, resolvedTheme, palette, privacyMode, compactMode, ambientGlow, globalTarget]);
+  }, [palette, privacyMode, compactMode, ambientGlow, globalTarget]);
 
-  const setThemeMode = (mode: ThemeMode) => setThemeModeState(mode);
+  const setThemeMode = () => {};
   const setPalette = (p: ColorPaletteId) => setPaletteState(p);
   const togglePrivacyMode = () => setPrivacyModeState((prev) => !prev);
   const toggleCompactMode = () => setCompactModeState((prev) => !prev);

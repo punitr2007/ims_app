@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import Link from 'next/link';
 import { Notice } from '@/lib/ims/types';
 import { createNoticeIndex } from '@/lib/search/fuse_indexer';
 import { NoticeSearchBar } from '@/components/notices/NoticeSearchBar';
-import { NoticeFilterBar } from '@/components/notices/NoticeFilterBar';
+import { NoticeFilterBar, NoticeSortOption } from '@/components/notices/NoticeFilterBar';
 import { NoticeCard } from '@/components/notices/NoticeCard';
 import { NoticeModal } from '@/components/notices/NoticeModal';
 import {
@@ -17,11 +16,23 @@ import {
   Zap,
   CheckCircle2,
   X,
-  Calendar,
-  Building2,
-  ShieldCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
+
+function parseNoticeDateMs(publishedDate: string): number {
+  try {
+    const parts = publishedDate.split('-');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day).getTime();
+    }
+  } catch {
+    // fallback
+  }
+  return 0;
+}
 
 export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -30,6 +41,7 @@ export default function NoticesPage() {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedSort, setSelectedSort] = useState<NoticeSortOption>('latest_time');
   const [onlyWithAttachments, setOnlyWithAttachments] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [page, setPage] = useState(1);
@@ -259,13 +271,49 @@ export default function NoticesPage() {
       result = result.filter((n) => Boolean(n.attachmentUrl));
     }
 
-    return result;
-  }, [notices, query, selectedCategory, selectedYear, onlyWithAttachments, fuseIndex]);
+    // 5. Precise Chronological & Arrival Time Sorting
+    if (query.trim().length < 2) {
+      result = [...result].sort((a, b) => {
+        if (selectedSort === 'latest_time') {
+          // Compare exact timestamps if available
+          if (a.scrapedAt && b.scrapedAt) {
+            const timeA = new Date(a.scrapedAt).getTime();
+            const timeB = new Date(b.scrapedAt).getTime();
+            if (timeA !== timeB) return timeB - timeA;
+          } else if (a.scrapedAt && !b.scrapedAt) {
+            return -1;
+          } else if (!a.scrapedAt && b.scrapedAt) {
+            return 1;
+          }
+          // Fall back to calendar date comparison
+          const dateA = parseNoticeDateMs(a.publishedDate);
+          const dateB = parseNoticeDateMs(b.publishedDate);
+          return dateB - dateA;
+        }
+        if (selectedSort === 'date_desc') {
+          const dateA = parseNoticeDateMs(a.publishedDate);
+          const dateB = parseNoticeDateMs(b.publishedDate);
+          return dateB - dateA;
+        }
+        if (selectedSort === 'date_asc') {
+          const dateA = parseNoticeDateMs(a.publishedDate);
+          const dateB = parseNoticeDateMs(b.publishedDate);
+          return dateA - dateB;
+        }
+        if (selectedSort === 'title_asc') {
+          return a.title.localeCompare(b.title);
+        }
+        return 0;
+      });
+    }
 
-  // Reset page when filters change
+    return result;
+  }, [notices, query, selectedCategory, selectedYear, onlyWithAttachments, selectedSort, fuseIndex]);
+
+  // Reset page when filters or sort change
   useEffect(() => {
     setPage(1);
-  }, [query, selectedCategory, selectedYear, onlyWithAttachments]);
+  }, [query, selectedCategory, selectedYear, onlyWithAttachments, selectedSort]);
 
   const paginatedNotices = useMemo(() => {
     return filteredNotices.slice(0, page * PAGE_SIZE);
@@ -370,78 +418,12 @@ export default function NoticesPage() {
           onSelectCategory={setSelectedCategory}
           selectedYear={selectedYear}
           onSelectYear={setSelectedYear}
+          selectedSort={selectedSort}
+          onSelectSort={setSelectedSort}
           onlyWithAttachments={onlyWithAttachments}
           onToggleAttachments={() => setOnlyWithAttachments((prev) => !prev)}
           availableYears={availableYears}
         />
-
-        {/* Academic Utilities & Feature Highlights */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/5">
-          <Link
-            href="/attendance"
-            className="group flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-[var(--brand-from)]/30 transition-all"
-          >
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
-              <Zap className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
-                Attendance &amp; Risk
-              </div>
-              <div className="text-[10px] text-slate-400 truncate">
-                Bunk margin &amp; simulator
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/attendance"
-            className="group flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-[var(--brand-from)]/30 transition-all"
-          >
-            <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform shrink-0">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
-                Smart Timetable
-              </div>
-              <div className="text-[10px] text-slate-400 truncate">
-                Weekly slots &amp; live lecture
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/attendance"
-            className="group flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-[var(--brand-from)]/30 transition-all"
-          >
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
-              <Building2 className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
-                Free APJ Rooms
-              </div>
-              <div className="text-[10px] text-slate-400 truncate">
-                Vacant rooms &amp; study spots
-              </div>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] border border-white/5">
-            <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-bold text-slate-200 truncate">
-                Zero-Knowledge Privacy
-              </div>
-              <div className="text-[10px] text-slate-400 truncate">
-                100% Client-side sandbox
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Notices Grid */}

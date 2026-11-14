@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Paperclip, Sparkles, Filter } from 'lucide-react';
+import { Paperclip, Sparkles, Filter, ArrowUpDown } from 'lucide-react';
 import clsx from 'clsx';
 
 export const CATEGORIES = [
@@ -13,6 +13,8 @@ export const CATEGORIES = [
   { id: 'sports', label: '🏆 Sports & NSS' },
 ];
 
+export type NoticeSortOption = 'latest_time' | 'date_desc' | 'date_asc' | 'title_asc';
+
 interface NoticeFilterBarProps {
   selectedCategory: string;
   onSelectCategory: (cat: string) => void;
@@ -21,6 +23,8 @@ interface NoticeFilterBarProps {
   selectedYear: string;
   onSelectYear: (year: string) => void;
   availableYears: string[];
+  selectedSort?: NoticeSortOption;
+  onSelectSort?: (sort: NoticeSortOption) => void;
 }
 
 export function NoticeFilterBar({
@@ -31,6 +35,8 @@ export function NoticeFilterBar({
   selectedYear,
   onSelectYear,
   availableYears,
+  selectedSort,
+  onSelectSort,
 }: NoticeFilterBarProps) {
   return (
     <div className="space-y-3">
@@ -55,25 +61,48 @@ export function NoticeFilterBar({
         })}
       </div>
 
-      {/* Secondary Controls: Year Filter & Attachment Filter */}
+      {/* Secondary Controls: Year Filter, Sort Order & Attachment Filter */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/5 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-            <Filter className="w-3.5 h-3.5 text-sky-400" />
-            <span>Academic Year:</span>
-          </span>
-          <select
-            value={selectedYear}
-            onChange={(e) => onSelectYear(e.target.value)}
-            className="bg-slate-900/90 border border-white/10 rounded-xl px-3 py-1.5 text-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-sky-500 cursor-pointer shadow-sm"
-          >
-            <option value="all">All Years</option>
-            {availableYears.map((yr) => (
-              <option key={yr} value={yr}>
-                {yr}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Year Filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 flex items-center gap-1.5 font-medium">
+              <Filter className="w-3.5 h-3.5 text-sky-400" />
+              <span>Year:</span>
+            </span>
+            <select
+              value={selectedYear}
+              onChange={(e) => onSelectYear(e.target.value)}
+              className="bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-mono font-semibold focus:outline-none focus:border-sky-500 cursor-pointer shadow-sm"
+            >
+              <option value="all">All Years</option>
+              {availableYears.map((yr) => (
+                <option key={yr} value={yr}>
+                  {yr}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort By Time / Order */}
+          {selectedSort && onSelectSort && (
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 flex items-center gap-1.5 font-medium">
+                <ArrowUpDown className="w-3.5 h-3.5 text-[var(--brand-from,#84cc16)]" />
+                <span>Sort:</span>
+              </span>
+              <select
+                value={selectedSort}
+                onChange={(e) => onSelectSort(e.target.value as NoticeSortOption)}
+                className="bg-slate-900/90 border border-white/10 rounded-xl px-2.5 py-1.5 text-slate-200 text-xs font-medium focus:outline-none focus:border-[var(--brand-from,#84cc16)] cursor-pointer shadow-sm"
+              >
+                <option value="latest_time">🕒 Arrival Time (Newest)</option>
+                <option value="date_desc">📅 Date (Newest First)</option>
+                <option value="date_asc">⏳ Date (Oldest First)</option>
+                <option value="title_asc">🔤 Title (A–Z)</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <button

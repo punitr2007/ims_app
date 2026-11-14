@@ -138,39 +138,31 @@ export function ThemeCustomizerModal() {
             </div>
           </div>
 
-          {/* Section 2: Light and Dark Themes */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200 uppercase tracking-wider">
-              <Sun className="w-3.5 h-3.5 text-brand-400" />
-              <span>Theme Appearance</span>
+          {/* Section 2: Base Appearance (Dark Mode Optimized) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-200 uppercase tracking-wider">
+                <Moon className="w-3.5 h-3.5 text-brand-400" />
+                <span>Base Appearance</span>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                OLED Dark
+              </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 bg-slate-950/70 p-1 rounded-2xl border border-white/10">
-              {(
-                [
-                  { id: 'dark', label: 'Dark Mode', icon: Moon },
-                  { id: 'light', label: 'Light Mode', icon: Sun },
-                  { id: 'system', label: 'System Auto', icon: Laptop },
-                ] as const
-              ).map(({ id, label, icon: Icon }) => {
-                const isActive = themeMode === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setThemeMode(id)}
-                    className={clsx(
-                      'flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all active:scale-95',
-                      isActive
-                        ? 'bg-gradient-to-r from-[var(--brand-from,#84cc16)] to-[var(--brand-to,#06b6d4)] text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{label}</span>
-                  </button>
-                );
-              })}
+            <div className="p-3 rounded-2xl bg-slate-950/70 border border-white/10 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-slate-900 border border-white/10 text-[var(--brand-from,#84cc16)]">
+                  <Moon className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white">Dark Mode Pro</div>
+                  <div className="text-[10px] text-slate-400">Deep surface contrast tuned for late-night study &amp; battery saver</div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-slate-950 bg-gradient-to-r from-[var(--brand-from,#84cc16)] to-[var(--brand-to,#06b6d4)] px-2.5 py-1 rounded-xl shadow-sm">
+                Default Active
+              </span>
             </div>
           </div>
 
