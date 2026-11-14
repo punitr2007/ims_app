@@ -13,7 +13,6 @@ import {
   ShieldAlert,
   Minus,
   Plus,
-  RotateCcw,
   Sparkles,
   Layers,
   ArrowRight,
@@ -354,18 +353,6 @@ export function AttendanceDetailOverlay({
                   >
                     <Plus className="w-5 h-5" />
                   </button>
-
-                  {simDelta > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSimDelta(0)}
-                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-800/90 hover:bg-rose-950/60 active:scale-90 text-slate-400 hover:text-rose-300 flex items-center justify-center transition-all border border-white/10 shrink-0"
-                      title="Reset simulation to 0"
-                      aria-label="Reset"
-                    >
-                      <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  )}
                 </div>
 
                 {/* Quick Presets */}
