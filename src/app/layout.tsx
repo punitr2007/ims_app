@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Analytics } from '@vercel/analytics/next';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ThemeCustomizerModal } from '@/components/theme/ThemeCustomizerModal';
+import { PWAInstallBanner } from '@/components/pwa/PWAInstallBanner';
 
 export const metadata: Metadata = {
   title: 'IMS NSUT Modern Portal - Attendance, Bunk Simulator & Circulars',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
-    apple: '/icon.svg',
+    apple: '/logo-192.png',
   },
   appleWebApp: {
     capable: true,
@@ -56,6 +57,7 @@ export default function RootLayout({
           </div>
 
           <ThemeCustomizerModal />
+          <PWAInstallBanner />
 
           {/* PWA Service Worker Registration */}
           <script

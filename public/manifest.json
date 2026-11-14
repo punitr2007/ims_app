@@ -1,19 +1,62 @@
 {
   "name": "IMS NSUT Student Portal",
   "short_name": "IMS NSUT",
-  "description": "Fast, modern academic portal for NSUT students with live attendance tracking, bunk simulator, offline caching, and circulars search.",
+  "description": "Fast, modern academic portal for NSUT students with live attendance tracking, smart timetable, bunk simulator, offline caching, and 10,000+ notices search.",
   "start_url": "/attendance",
   "id": "/attendance",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#020617",
-  "theme_color": "#0284c7",
-  "orientation": "portrait-primary",
+  "theme_color": "#020617",
+  "orientation": "any",
   "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Attendance & Risk",
+      "short_name": "Attendance",
+      "description": "Check real-time course attendance & bunk simulator",
+      "url": "/attendance",
+      "icons": [{ "src": "/logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Smart Timetable",
+      "short_name": "Timetable",
+      "description": "Weekly schedule & live lecture indicator",
+      "url": "/attendance?tab=timetable",
+      "icons": [{ "src": "/logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Free APJ Rooms",
+      "short_name": "Free Rooms",
+      "description": "Find vacant classrooms & study spots",
+      "url": "/attendance?tab=room_finder",
+      "icons": [{ "src": "/logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Notices & Circulars",
+      "short_name": "Circulars",
+      "description": "Search official datesheets & circulars",
+      "url": "/",
+      "icons": [{ "src": "/logo-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["education", "productivity", "utilities"]

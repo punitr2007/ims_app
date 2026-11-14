@@ -30,8 +30,15 @@ export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState<'attendance' | 'timetable' | 'room_finder'>('attendance');
   const [lastSyncedDisplay, setLastSyncedDisplay] = useState<string>('');
 
-  // 1. Instant 0-latency load from localStorage on client mount
+  // 1. Instant 0-latency load from localStorage on client mount & query tab sync
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'timetable') setActiveTab('timetable');
+      else if (tab === 'room_finder' || tab === 'rooms') setActiveTab('room_finder');
+    }
+
     try {
       const cached =
         localStorage.getItem('ims_attendance_data_v2') ||

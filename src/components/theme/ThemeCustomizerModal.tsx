@@ -18,6 +18,7 @@ import {
   Check,
   Shield,
   Smartphone,
+  Download,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { AppLogo } from '../brand/AppLogo';
@@ -277,6 +278,25 @@ export function ThemeCustomizerModal() {
                     )}
                   />
                 </button>
+              </div>
+
+              {/* Addon 4: Standalone PWA Installation Status */}
+              <div className="p-3 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <div className="p-2 rounded-xl bg-slate-800/80 text-brand-400 mt-0.5">
+                    <Download className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Standalone PWA App</h5>
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      Add to Home Screen on Android, iOS, or Desktop for full-screen view.
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                  Ready &bull; PWA
+                </span>
               </div>
             </div>
           </div>

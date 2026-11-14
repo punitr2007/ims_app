@@ -1,10 +1,12 @@
 // IMS NSUT Portal Service Worker - Offline Cache & Performance Booster
-const CACHE_NAME = 'ims-nsut-v1';
+const CACHE_NAME = 'ims-nsut-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/attendance',
   '/manifest.json',
   '/icon.svg',
+  '/logo-192.png',
+  '/logo-512.png',
 ];
 
 self.addEventListener('install', (event) => {
