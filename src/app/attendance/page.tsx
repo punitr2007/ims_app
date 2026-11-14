@@ -6,6 +6,7 @@ import { LoginForm } from '@/components/attendance/LoginForm';
 import { AttendanceCard } from '@/components/attendance/AttendanceCard';
 import { BunkCalculator } from '@/components/attendance/BunkCalculator';
 import { RoomFinder } from '@/components/campus/RoomFinder';
+import { SmartTimetable } from '@/components/campus/SmartTimetable';
 import {
   GraduationCap,
   RefreshCw,
@@ -18,6 +19,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Layers,
+  Calendar,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -25,7 +27,7 @@ export default function AttendancePage() {
   const [attendance, setAttendance] = useState<AttendanceResponse | null>(null);
   const [targetPercentage, setTargetPercentage] = useState<number>(75);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'attendance' | 'room_finder'>('attendance');
+  const [activeTab, setActiveTab] = useState<'attendance' | 'timetable' | 'room_finder'>('attendance');
   const [lastSyncedDisplay, setLastSyncedDisplay] = useState<string>('');
 
   // 1. Instant 0-latency load from localStorage on client mount
@@ -193,7 +195,7 @@ export default function AttendancePage() {
                 </div>
               </div>
 
-              {/* Navigation Pill (Attendance vs Campus Utilities) */}
+              {/* Navigation Pill (Attendance vs Timetable vs Campus Utilities) */}
               <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-2xl border border-white/10 self-stretch sm:self-auto">
                 <button
                   type="button"
@@ -207,6 +209,19 @@ export default function AttendancePage() {
                 >
                   <Layers className="w-3.5 h-3.5" />
                   <span>Attendance</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('timetable')}
+                  className={clsx(
+                    'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all',
+                    activeTab === 'timetable'
+                      ? 'bg-brand-600 text-white shadow-md shadow-brand-500/30'
+                      : 'text-slate-400 hover:text-white'
+                  )}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Timetable</span>
                 </button>
                 <button
                   type="button"
@@ -260,6 +275,13 @@ export default function AttendancePage() {
                 </div>
               </div>
             </>
+          ) : activeTab === 'timetable' ? (
+            /* Smart Timetable View */
+            <SmartTimetable
+              enrolledSubjects={attendance.subjects || []}
+              targetPercentage={targetPercentage}
+              onNavigateToRooms={() => setActiveTab('room_finder')}
+            />
           ) : (
             /* Campus Utility: Free APJ Rooms Finder */
             <RoomFinder />

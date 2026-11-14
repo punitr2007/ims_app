@@ -45,9 +45,12 @@ export function NoticeCard({ notice, onOpenNotice, isFreshlySynced }: NoticeCard
   return (
     <div
       onClick={() => onOpenNotice(notice)}
-      className="glass-panel glass-panel-hover p-4 sm:p-5 rounded-3xl cursor-pointer group flex flex-col justify-between transition-all border border-white/5 hover:border-sky-500/30 shadow-xl"
+      className="glass-panel glass-panel-hover p-4 sm:p-5 rounded-3xl cursor-pointer group flex flex-col justify-between transition-all border border-white/5 hover:border-[var(--brand-from,#84cc16)]/35 shadow-xl relative overflow-hidden"
     >
-      <div className="space-y-3">
+      {/* Subtle Ambient Hover Glow (Hajiri-inspired) */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[var(--brand-from,#84cc16)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+      <div className="space-y-3 relative z-10">
         {/* Top Header: Date, New Badge & Category */}
         <div className="flex items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-1.5 text-slate-400 font-mono text-[11px]">

@@ -193,6 +193,66 @@ export function BunkCalculator({
         </div>
       </div>
 
+      {/* Semester Course Health Distribution (Hajiri-inspired Performance Analytics) */}
+      {subjects.length > 0 && (() => {
+        const safeCourses = subjects.filter((s) => s.totalHeld === 0 || s.percentage >= target);
+        const warningCourses = subjects.filter(
+          (s) => s.totalHeld > 0 && s.percentage < target && s.percentage >= target - 5
+        );
+        const dangerCourses = subjects.filter(
+          (s) => s.totalHeld > 0 && s.percentage < target - 5
+        );
+        const totalCount = subjects.length;
+        const safePct = Math.round((safeCourses.length / totalCount) * 100);
+        const warningPct = Math.round((warningCourses.length / totalCount) * 100);
+        const dangerPct = Math.max(0, 100 - safePct - warningPct);
+
+        return (
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/60 border border-white/5 space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[var(--brand-from,#84cc16)] animate-pulse" />
+                <span>Course Health Analytics ({totalCount} Subjects)</span>
+              </span>
+              <div className="flex items-center gap-3 text-[11px] font-medium font-mono">
+                <span className="text-emerald-400">🟢 {safeCourses.length} Safe</span>
+                {warningCourses.length > 0 && (
+                  <span className="text-amber-400">🟡 {warningCourses.length} Margin</span>
+                )}
+                {dangerCourses.length > 0 && (
+                  <span className="text-rose-400">🔴 {dangerCourses.length} Shortage</span>
+                )}
+              </div>
+            </div>
+
+            {/* Segmented Progress Track */}
+            <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden flex p-0.5 border border-white/5 gap-0.5">
+              {safeCourses.length > 0 && (
+                <div
+                  style={{ width: `${safePct}%` }}
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
+                  title={`${safeCourses.length} Courses Safe (≥${target}%)`}
+                />
+              )}
+              {warningCourses.length > 0 && (
+                <div
+                  style={{ width: `${warningPct}%` }}
+                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-500"
+                  title={`${warningCourses.length} Courses on Margin`}
+                />
+              )}
+              {dangerCourses.length > 0 && (
+                <div
+                  style={{ width: `${dangerPct}%` }}
+                  className="h-full rounded-full bg-gradient-to-r from-rose-600 to-rose-400 transition-all duration-500"
+                  title={`${dangerCourses.length} Courses with Attendance Shortage`}
+                />
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Actionable Banner */}
       <div
         className={clsx(

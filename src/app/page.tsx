@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { Notice } from '@/lib/ims/types';
 import { createNoticeIndex } from '@/lib/search/fuse_indexer';
 import { NoticeSearchBar } from '@/components/notices/NoticeSearchBar';
@@ -16,6 +17,9 @@ import {
   Zap,
   CheckCircle2,
   X,
+  Calendar,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -370,6 +374,74 @@ export default function NoticesPage() {
           onToggleAttachments={() => setOnlyWithAttachments((prev) => !prev)}
           availableYears={availableYears}
         />
+
+        {/* Academic Utilities & Feature Highlights */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/5">
+          <Link
+            href="/attendance"
+            className="group flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-[var(--brand-from)]/30 transition-all"
+          >
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+              <Zap className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
+                Attendance &amp; Risk
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                Bunk margin &amp; simulator
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/attendance"
+            className="group flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-[var(--brand-from)]/30 transition-all"
+          >
+            <div className="w-8 h-8 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform shrink-0">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
+                Smart Timetable
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                Weekly slots &amp; live lecture
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/attendance"
+            className="group flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.07] border border-white/5 hover:border-[var(--brand-from)]/30 transition-all"
+          >
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform shrink-0">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-slate-200 group-hover:text-white truncate">
+                Free APJ Rooms
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                Vacant rooms &amp; study spots
+              </div>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-2.5 p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold text-slate-200 truncate">
+                Zero-Knowledge Privacy
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">
+                100% Client-side sandbox
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Notices Grid */}

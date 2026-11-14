@@ -116,6 +116,9 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
         onClick={() => handleOpenDetail('daily')}
         className="glass-panel glass-panel-hover rounded-3xl border border-white/5 hover:border-brand-500/30 transition-all p-4 sm:p-5 flex flex-col justify-between shadow-xl cursor-pointer group relative overflow-hidden h-full min-h-[250px]"
       >
+        {/* Subtle Ambient Hover Glow (Hajiri-inspired) */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-[var(--brand-from,#84cc16)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
         {/* Subtle top ambient indicator */}
         <div
           className={clsx(
@@ -126,7 +129,7 @@ export function AttendanceCard({ subject, targetPercentage = 75 }: AttendanceCar
           )}
         />
 
-        <div className="space-y-3">
+        <div className="space-y-3 relative z-10">
           {/* Header */}
           <div className="flex items-start justify-between gap-2.5">
             <div className="space-y-1 pr-1">
